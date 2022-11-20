@@ -19,7 +19,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// <summary>	头文件解析类. </summary>
 ///
-/// <remarks>	李俊峰, 2022/9/5. </remarks>
+/// <remarks>	August295, 2022/9/5. </remarks>
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 class TYPEPARSER_EXPORT TypeParser
 {
@@ -30,14 +30,14 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// <summary>	初始化，读入基本数据，如关键字 / 限定符和基本数据类型大小. </summary>
     ///
-    /// <remarks>	李俊峰, 2022/9/5. </remarks>
+    /// <remarks>	August295, 2022/9/5. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     void Initialize();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// <summary>	设置解析文件夹路径. </summary>
     ///
-    /// <remarks>	李俊峰, 2022/9/5. </remarks>
+    /// <remarks>	August295, 2022/9/5. </remarks>
     ///
     /// <param name="paths">	文件夹路径集合. </param>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -48,7 +48,7 @@ public:
     ///		1. 使用前先设置 include_paths_
     ///		2. 先获取指定路径下的全部文件
     ///		3. 再遍历文件解析
-    /// <remarks>	李俊峰, 2022/9/5. </remarks>
+    /// <remarks>	August295, 2022/9/5. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     void ParseFiles();
     void ParseFile(const std::string& file);
@@ -56,7 +56,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// <summary>	解析处理好的字符串. </summary>
     ///
-    /// <remarks>	李俊峰, 2022/9/5. </remarks>
+    /// <remarks>	August295, 2022/9/5. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     void ParseSource(const std::string& src);
 
@@ -67,7 +67,7 @@ public:
     ///		3. 获取剩下的部分
     ///		4. 跳过当前行
     ///		5. 切割行获取标记
-    /// <remarks>	李俊峰, 2022/9/5. </remarks>
+    /// <remarks>	August295, 2022/9/5. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     bool   GetNextToken(std::string src, size_t& pos, std::string& token, bool cross_line = true) const;
     bool   GetNextLine(std::string src, size_t& pos, std::string& line) const;
@@ -83,7 +83,7 @@ public:
     ///		4. 解析预处理指令
     ///		5. 解析结构体或联合体
     ///		6. 解析枚举
-    /// <remarks>	李俊峰, 2022/9/5. </remarks>
+    /// <remarks>	August295, 2022/9/5. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     bool ParseDeclaration(const std::string& line, VariableDeclaration& decl) const;
     bool ParseEnumDeclaration(const std::string& line, int& last_value, std::pair<std::string, int>& decl, bool& is_last_member) const;
@@ -97,7 +97,7 @@ public:
     ///		1. 构造默认变量信息
     ///		2. 使用填充字段填充结构以进行内存对齐
     ///		3. 计算联合体大小
-    /// <remarks>	李俊峰, 2022/9/5. </remarks>
+    /// <remarks>	August295, 2022/9/5. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     VariableDeclaration MakePadField(const size_t size) const;
     size_t              PadStructMembers(std::list<VariableDeclaration>& members);
@@ -106,7 +106,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// <summary>	存储结构体或联合体的定义和大小. </summary>
     ///
-    /// <remarks>	李俊峰, 2022/9/5. </remarks>
+    /// <remarks>	August295, 2022/9/5. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     void StoreStructUnionDef(const bool is_struct, const std::string& type_name, std::list<VariableDeclaration>& members);
 
@@ -114,7 +114,7 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// <summary>	获取指定路径下所有文件. </summary>
     ///
-    /// <remarks>	李俊峰, 2022/9/5. </remarks>
+    /// <remarks>	August295, 2022/9/5. </remarks>
     ///
     /// <param name="path">	文件路径. </param>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -128,7 +128,7 @@ private:
     ///		3. 去掉尾部空格
     ///		4. 将 '\n' 换行合并为一行
     ///		5. 合并所有行
-    /// <remarks>	李俊峰, 2022/9/5. </remarks>
+    /// <remarks>	August295, 2022/9/5. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     std::string Preprocess(std::ifstream& ifs) const;
     void        StripComments(std::list<std::string>& lines) const;
@@ -139,7 +139,7 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// <summary>	添加功能. </summary>
     ///		1. 获取注释
-    /// <remarks>	李俊峰, 2022/9/20. </remarks>
+    /// <remarks>	August295, 2022/9/20. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     bool ParseComment(const std::string& src, size_t& pos, std::string& comment) const;
 
@@ -151,7 +151,7 @@ private:
     ///		4. 检查令牌是数字还是可以转换为数字
     ///		5. 获取类型大小
     ///		6. 转储提取的类型定义
-    /// <remarks>	李俊峰, 2022/9/5. </remarks>
+    /// <remarks>	August295, 2022/9/5. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     std::string GetNextToken(const std::string line, size_t& i) const; // TODO: std::string ignore=" \t"
     bool        IsIgnorable(std::string token) const;
