@@ -1,0 +1,6 @@
+# Compilation environment
+build
+include/ParseHeader
+
+# User Configuration
+*.user
