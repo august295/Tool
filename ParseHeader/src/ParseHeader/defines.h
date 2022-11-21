@@ -5,28 +5,44 @@
 #include <vector>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// <summary>	结构体成员变量信息
-/// 	变量声明可以包含4个部分（以下语句为例：char* argv[2]）：
-/// 	   - data_type:     char
-/// 	   - var_name:      argv
-/// 	   - array_size:    2
-/// 	   - is_pointer:    true
-/// 	   - var_size:		8
-/// 	   - comment:		注释
-/// 	这里只支持一个维度数组，但很容易扩展.
+/// <summary>   结构体成员变量信息
+///     变量声明可以包含4个部分（以下语句为例：char* argv[2]; // 注释）：
+///             - m_type:       char
+///             - m_name:       argv
+///             - m_comment:    注释
+///             - m_is_pointer: true
+///             - m_size_array: 2
+///             - m_size_value: 8
 /// </summary>
 ///
 /// <remarks>	August295, 2022/9/5. </remarks>
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-typedef struct
+struct StructDeclaration
 {
-    std::string data_type;  ///< name of a data type, either basic type or user-defined type
-    std::string var_name;   ///< variable name
-    size_t      array_size; ///< array size: 0 for non-array
-    bool        is_pointer; ///< true when it's a pointer
-    size_t      var_size;   ///< size in bytes
-    std::string comment;
-} VariableDeclaration;
+    std::string m_type;       ///< name of a data type, either basic type or user-defined type
+    std::string m_name;       ///< variable name
+    std::string m_comment;    ///< variable m_comment
+    bool        m_is_pointer; ///< true when it's a pointer
+    size_t      m_size_array; ///< array size: 0 for non-array
+    size_t      m_size_value; ///< size in bytes
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// <summary>   枚举成员变量信息
+///     变量声明可以包含2个部分（以下语句为例：ROOT = 0, // 注释）：
+///             - m_name:       ROOT
+///             - m_comment:    注释
+///             - m_value:      0
+/// </summary>
+///
+/// <remarks>	August295, 2022/9/5. </remarks>
+////////////////////////////////////////////////////////////////////////////////////////////////////
+struct EnumDeclaration
+{
+    std::string m_name;    ///< variable name
+    std::string m_comment; ///< variable m_comment
+    int         m_value;   ///< variable value
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// <summary>	数据标记类型. </summary>

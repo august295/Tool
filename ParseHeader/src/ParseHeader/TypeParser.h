@@ -85,12 +85,12 @@ public:
     ///		6. 解析枚举
     /// <remarks>	August295, 2022/9/5. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    bool ParseDeclaration(const std::string& line, VariableDeclaration& decl) const;
-    bool ParseEnumDeclaration(const std::string& line, int& last_value, std::pair<std::string, int>& decl, bool& is_last_member) const;
+    bool ParseDeclaration(const std::string& line, StructDeclaration& decl) const;
+    bool ParseEnumDeclaration(const std::string& line, int& last_value, EnumDeclaration& decl, bool& is_last_member) const;
     bool ParseAssignExpression(const std::string& line);
     void ParsePreProcDirective(const std::string& src, size_t& pos);
-    bool ParseStructUnion(const bool is_struct, const bool is_typedef, const std::string& src, size_t& pos, VariableDeclaration& decl, bool& is_decl);
-    bool ParseEnum(const bool is_typedef, const std::string& src, size_t& pos, VariableDeclaration& var_decl, bool& is_decl);
+    bool ParseStructUnion(const bool is_struct, const bool is_typedef, const std::string& src, size_t& pos, StructDeclaration& decl, bool& is_decl);
+    bool ParseEnum(const bool is_typedef, const std::string& src, size_t& pos, StructDeclaration& var_decl, bool& is_decl);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// <summary>	结构体或联合体大小定义. </summary>
@@ -99,16 +99,16 @@ public:
     ///		3. 计算联合体大小
     /// <remarks>	August295, 2022/9/5. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    VariableDeclaration MakePadField(const size_t size) const;
-    size_t              PadStructMembers(std::list<VariableDeclaration>& members);
-    size_t              CalcUnionSize(const std::list<VariableDeclaration>& members) const;
+    StructDeclaration MakePadField(const size_t size) const;
+    size_t            PadStructMembers(std::list<StructDeclaration>& members);
+    size_t            CalcUnionSize(const std::list<StructDeclaration>& members) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// <summary>	存储结构体或联合体的定义和大小. </summary>
     ///
     /// <remarks>	August295, 2022/9/5. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    void StoreStructUnionDef(const bool is_struct, const std::string& type_name, std::list<VariableDeclaration>& members);
+    void StoreStructUnionDef(const bool is_struct, const std::string& type_name, std::list<StructDeclaration>& members);
 
 private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -141,7 +141,7 @@ private:
     ///		1. 获取注释
     /// <remarks>	August295, 2022/9/20. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    bool ParseComment(const std::string& src, size_t& pos, std::string& comment) const;
+    bool ParseComment(const std::string& src, size_t& pos, std::string& m_comment) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// <summary>	工具函数. </summary>
@@ -157,7 +157,7 @@ private:
     bool        IsIgnorable(std::string token) const;
     TokenTypes  GetTokenType(const std::string& token) const;
     bool        IsNumericToken(const std::string& token, long& number) const;
-    size_t      GetTypeSize(const std::string& data_type) const;
+    size_t      GetTypeSize(const std::string& m_type) const;
     void        DumpTypeDefs() const;
 
 public:
@@ -189,13 +189,13 @@ public:
     /// value   - type members
 
     /// struct definitons
-    std::map<std::string, std::list<VariableDeclaration>> struct_defs_;
+    std::map<std::string, std::list<StructDeclaration>> struct_defs_;
 
     /// union definitions
-    std::map<std::string, std::list<VariableDeclaration>> union_defs_;
+    std::map<std::string, std::list<StructDeclaration>> union_defs_;
 
     /// enum definitions
-    std::map<std::string, std::list<std::pair<std::string, int>>> enum_defs_;
+    std::map<std::string, std::list<EnumDeclaration>> enum_defs_;
 
     /// constants and macros that have integer values
     /// key     - constant/macro name

@@ -7,11 +7,11 @@
 #include <functional> // std::ptr_fun, std::not1
 #include <iomanip>    // std::setfill, std::setw, std::setiosflags
 #include <iostream>   // std::cout, std::endl
-#include <map> // std::map
-#include <sstream>  // std::ostringstream
-#include <stdlib.h> // srand, rand
-#include <string> // std::string
-#include <time.h> // time
+#include <map>        // std::map
+#include <sstream>    // std::ostringstream
+#include <stdlib.h>   // srand, rand
+#include <string>     // std::string
+#include <time.h>     // time
 
 #include "dirent.h"
 

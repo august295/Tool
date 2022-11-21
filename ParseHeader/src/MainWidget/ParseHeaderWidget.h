@@ -4,10 +4,11 @@
 #include <set>
 #include <string>
 
-#include "ui_ParseHeaderWidget.h"
 #include <QtWidgets/QWidget>
 
 #include "ParseHeader/TypeParser.h"
+
+#include "ui_ParseHeaderWidget.h"
 
 class ParseHeaderWidget : public QWidget
 {
@@ -49,32 +50,27 @@ public slots:
     ///     3. 保存到文件
     /// <remarks>	August295, 2022/9/6. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    void on_pushButton_Flush();
-    void on_pushButton_Select();
-    void on_pushButton_Save();
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// <summary>	右键菜单. </summary>
-    ///		1. 显示菜单
-    ///     2. 添加结构体
-    /// <remarks>	August295, 2022/9/7. </remarks>
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    void ShowTreeRightMenu(const QPoint& pos);
-    void AddStruct();
+    void DataFlush();
+    void DataSelect();
+    void DataSave();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// <summary>	结构体显示. </summary>
     ///
     /// <remarks>	August295, 2022/9/6. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    void on_tableWidget_itemClicked(QTreeWidgetItem* item, int column);
+    void DataShow(QTreeWidgetItem* item, int column);
     void ShowTableStruct(const std::string& file, const std::string& stru);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// <summary>	完成结构体添加. </summary>
-    ///
+    /// <summary>	右键菜单. </summary>
+    ///		1. 显示菜单
+    ///     2. 添加结构体
+    ///     3. 完成结构体添加
     /// <remarks>	August295, 2022/9/7. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
+    void ShowTreeRightMenu(const QPoint& pos);
+    void AddStruct();
     void AddStructFinish();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,7 +78,7 @@ public slots:
     ///
     /// <remarks>	August295, 2022/9/8. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    void PackageStruct(const std::string& structName, const std::list<VariableDeclaration>& varList, std::vector<std::string>& lineVec);
+    void PackageStruct(const std::string& structName, const std::list<StructDeclaration>& varList, std::vector<std::string>& lineVec);
 
 public:
     enum NodeType

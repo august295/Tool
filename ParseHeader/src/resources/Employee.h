@@ -1,58 +1,62 @@
 #ifndef _EMPLOYEE_
-#define _EMPLOYEE_              
+#define _EMPLOYEE_
 
 #define MAX_NAME_LENGTH 16
-int i=1;
+int i = 1;
 
-// Hometown 
+// Hometown
 typedef enum Home
 {
     Anhui = 1,
-    Beijing=9, 
+    Beijing = 9,
     Shanghai,
     Zhejiang = 33
-}Home;
+} Home;
 /**/
-typedef struct Manager {
-	char a;
+typedef struct Manager
+{
+    char a;
     int level;
-}Manager;
+} Manager;
 
 //*
 typedef struct _Engineer
 {
-	char a; // a
-	char b;
-	short c;
+    char a;
+    char b;
+    short c;
     int skills;
-}_Engineer;//*/
+} _Engineer; //*/
 
-typedef struct 
+typedef struct
 {
     char name[MAX_NAME_LENGTH];
-    int  age;
+    int age;
     enum Home home;
-}Person;
+} Person;
 
 typedef union Position
 {
     struct Manager manager;
+    // Engineer engineer;
     struct Engineer
-	{
-	    int skills;
-	}engineer;
-}Position;
+    {
+        // char a;
+        // short b;
+        int skills;
+    } engineer;
+} Position;
 
 typedef struct Employee
 {
-    int  id;
-    Person  person;
+    int id;
+    Person person;
     union Position position;
-}Employee;
+} Employee;
 
-union _Position{
-	int level;
-	int skills;
+union _Position
+{
+    int level;
+    int skills;
 };
-
 #endif

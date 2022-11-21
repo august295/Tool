@@ -1,6 +1,6 @@
+#include <algorithm>
 #include <assert.h>
 #include <iostream>
-#include <math.h>
 
 #ifdef WIN32
 #include "dirent.h" // opendir/readdir, @see http://www.softagalleria.net/download/dirent/
@@ -210,7 +210,7 @@ std::string TypeParser::Preprocess(std::ifstream& ifs) const
     return MergeAllLines(lines);
 }
 
-bool TypeParser::ParseComment(const std::string& src, size_t& pos, std::string& comment) const
+bool TypeParser::ParseComment(const std::string& src, size_t& pos, std::string& m_comment) const
 {
     size_t      index = pos;
     std::string token;
@@ -219,28 +219,28 @@ bool TypeParser::ParseComment(const std::string& src, size_t& pos, std::string& 
     if (token == "/")
     {
         GetRestLine(src, index, line);
-        comment = token + line;
-        if (comment[0] == '/' && comment[1] == '/')
+        m_comment = token + line;
+        if (m_comment[0] == '/' && m_comment[1] == '/')
         {
-            comment = comment.substr(2, comment.size() - 2);
-            comment = trim(comment);
-            pos     = index;
+            m_comment = m_comment.substr(2, m_comment.size() - 2);
+            m_comment = trim(m_comment);
+            pos       = index;
             return true;
         }
-        else if (comment[0] == '/' && comment[1] == '*')
+        else if (m_comment[0] == '/' && m_comment[1] == '*')
         {
             while (true)
             {
-                if ('*' == comment[comment.size() - 2] && '/' == comment[comment.size() - 1])
+                if ('*' == m_comment[m_comment.size() - 2] && '/' == m_comment[m_comment.size() - 1])
                 {
-                    comment = comment.substr(2, comment.size() - 4);
-                    comment = trim(comment);
-                    pos     = index;
+                    m_comment = m_comment.substr(2, m_comment.size() - 4);
+                    m_comment = trim(m_comment);
+                    pos       = index;
                     return true;
                 }
                 GetNextToken(src, index, token);
                 GetRestLine(src, index, line);
-                comment += token + line;
+                m_comment += token + line;
             }
         }
     }
@@ -249,15 +249,15 @@ bool TypeParser::ParseComment(const std::string& src, size_t& pos, std::string& 
 
 /// Strip all comments from code lines
 ///
-/// - either line comment or comment blocks will be removed
-/// - all special cases (like multiple comment blocks in one line) can be handled perfectly
-///     except fake comments within quotation marks (like str = "/* fake comment */ // non-comment";)
+/// - either line m_comment or m_comment blocks will be removed
+/// - all special cases (like multiple m_comment blocks in one line) can be handled perfectly
+///     except fake comments within quotation marks (like str = "/* fake m_comment */ // non-m_comment";)
 ///     but this doesn't impact the parsing
 ///
 /// @param[in,out]  lines   lines of source code, comments will be removed directly from the lines
 void TypeParser::StripComments(std::list<std::string>& lines) const
 {
-    bool is_block   = false; // whether a comment block starts
+    bool is_block   = false; // whether a m_comment block starts
     bool is_changed = false; // whether current line is changed after removing comments
 
     std::string line;
@@ -273,20 +273,20 @@ void TypeParser::StripComments(std::list<std::string>& lines) const
 
         Info("parsing line: [" + line + "]");
 
-        // search comment start
+        // search m_comment start
         while (std::string::npos != (pos = line.find(kSlash, pos)))
         {
             if (line.length() <= pos + 1)
-                break; // the 1st '/' is at the end of line, so not a comment
+                break; // the 1st '/' is at the end of line, so not a m_comment
 
             switch (line.at(pos + 1))
             {
-            case kSlash: // line comment
+            case kSlash: // line m_comment
                 line.erase(pos);
                 is_changed = true;
                 break;
 
-            case kAsterisk: // comment block
+            case kAsterisk: // m_comment block
                 is_block   = true;
                 is_changed = true;
 
@@ -306,7 +306,7 @@ void TypeParser::StripComments(std::list<std::string>& lines) const
                     }
                 }
                 while (!is_block && std::string::npos != (pos = line.find("/*", pos)));
-                // loop for possible multiple comment blocks on one line
+                // loop for possible multiple m_comment blocks on one line
                 break;
 
             default:
@@ -352,7 +352,7 @@ void TypeParser::StripComments(std::list<std::string>& lines) const
 
             if (is_block)
             {
-                Error("Unclosed comment block exists");
+                Error("Unclosed m_comment block exists");
             }
         }
     }
@@ -584,24 +584,24 @@ bool TypeParser::IsNumericToken(const std::string& token, long& number) const
 
 /// Get size of a type (in bytes)
 ///
-/// @param[in]  data_type    name of a data type, including both C data types and user-defined struct/union/enum types
+/// @param[in]  m_type    name of a data type, including both C data types and user-defined struct/union/enum types
 /// @return -1 if is data type is unknown, else return actual type length
 ///
 /// @note Shouldn't return 0 for unknown data type since "void" type has zero length
 ///
-size_t TypeParser::GetTypeSize(const std::string& data_type) const
+size_t TypeParser::GetTypeSize(const std::string& m_type) const
 {
-    if (type_sizes_.find(data_type) != type_sizes_.end())
+    if (type_sizes_.find(m_type) != type_sizes_.end())
     {
-        return type_sizes_.at(data_type);
+        return type_sizes_.at(m_type);
     }
-    else if (enum_defs_.find(data_type) != enum_defs_.end())
+    else if (enum_defs_.find(m_type) != enum_defs_.end())
     {
         return sizeof(int);
     }
     else
     {
-        Error("Unknown data type - " + data_type);
+        Error("Unknown data type - " + m_type);
         return -1;
     }
 }
@@ -609,7 +609,7 @@ size_t TypeParser::GetTypeSize(const std::string& data_type) const
 /// Dump the extracted type definitions
 void TypeParser::DumpTypeDefs() const
 {
-    VariableDeclaration var;
+    StructDeclaration var;
 
     // dump numeric const variables or macros
     std::cout << "\nconstant values:"
@@ -622,27 +622,27 @@ void TypeParser::DumpTypeDefs() const
     // dump struct definitions
     std::cout << "\nstruct definitions:"
               << "\n--------------------" << std::endl;
-    for (std::map<std::string, std::list<VariableDeclaration>>::const_iterator it = struct_defs_.begin();
+    for (std::map<std::string, std::list<StructDeclaration>>::const_iterator it = struct_defs_.begin();
          it != struct_defs_.end();
          ++it)
     {
         std::cout << "struct " << it->first << ":" << std::endl;
 
-        std::list<VariableDeclaration> members = it->second;
+        std::list<StructDeclaration> members = it->second;
         while (!members.empty())
         {
             var = members.front();
-            std::cout << '\t' << var.data_type;
+            std::cout << '\t' << var.m_type;
 
-            if (var.is_pointer)
+            if (var.m_is_pointer)
                 std::cout << "* ";
 
-            std::cout << "\t" << var.var_name;
+            std::cout << "\t" << var.m_name;
 
-            if (0 < var.array_size)
-                std::cout << "[" << var.array_size << "]";
+            if (0 < var.m_size_array)
+                std::cout << "[" << var.m_size_array << "]";
 
-            std::cout << "\t(" << var.var_size << ")" << std::endl;
+            std::cout << "\t(" << var.m_size_value << ")" << std::endl;
 
             members.pop_front();
         }
@@ -655,27 +655,27 @@ void TypeParser::DumpTypeDefs() const
     // dump union definitions
     std::cout << "\nunion definitions:"
               << "\n--------------------" << std::endl;
-    for (std::map<std::string, std::list<VariableDeclaration>>::const_iterator itu = union_defs_.begin();
+    for (std::map<std::string, std::list<StructDeclaration>>::const_iterator itu = union_defs_.begin();
          itu != union_defs_.end();
          ++itu)
     {
         std::cout << "union " << itu->first << ":" << std::endl;
 
-        std::list<VariableDeclaration> members = itu->second;
+        std::list<StructDeclaration> members = itu->second;
         while (!members.empty())
         {
             var = members.front();
-            std::cout << '\t' << var.data_type;
+            std::cout << '\t' << var.m_type;
 
-            if (var.is_pointer)
+            if (var.m_is_pointer)
                 std::cout << "* ";
 
-            std::cout << "\t" << var.var_name;
+            std::cout << "\t" << var.m_name;
 
-            if (0 < var.array_size)
-                std::cout << "[" << var.array_size << "]";
+            if (0 < var.m_size_array)
+                std::cout << "[" << var.m_size_array << "]";
 
-            std::cout << "\t(" << var.var_size << ")" << std::endl;
+            std::cout << "\t(" << var.m_size_value << ")" << std::endl;
 
             members.pop_front();
         }
@@ -686,17 +686,15 @@ void TypeParser::DumpTypeDefs() const
     // dump enum definitions
     std::cout << "\nenum definitions:"
               << "\n--------------------" << std::endl;
-    for (std::map<std::string, std::list<std::pair<std::string, int>>>::const_iterator itv = enum_defs_.begin();
-         itv != enum_defs_.end();
-         ++itv)
+    for (auto itv = enum_defs_.begin(); itv != enum_defs_.end(); ++itv)
     {
         std::cout << "enum " << itv->first << ":" << std::endl;
 
-        std::list<std::pair<std::string, int>> members = itv->second;
+        std::list<EnumDeclaration> members = itv->second;
         while (!members.empty())
         {
-            std::pair<std::string, int> var = members.front();
-            std::cout << '\t' << var.first << "(" << var.second << ")" << std::endl;
+            EnumDeclaration var = members.front();
+            std::cout << '\t' << var.m_name << "(" << var.m_value << ")" << std::endl;
             members.pop_front();
         }
         std::cout << '\n'
@@ -900,8 +898,8 @@ void TypeParser::ParseSource(const std::string& src)
     bool        is_typedef = false;
     TokenTypes  type;
 
-    VariableDeclaration decl;
-    bool                is_decl = false;
+    StructDeclaration decl;
+    bool              is_decl = false;
 
     std::string type_name;
     while (GetNextToken(src, pos, token))
@@ -976,11 +974,11 @@ void TypeParser::ParseSource(const std::string& src)
 }
 
 /// Parse enum block
-bool TypeParser::ParseEnum(const bool is_typedef, const std::string& src, size_t& pos, VariableDeclaration& var_decl, bool& is_decl)
+bool TypeParser::ParseEnum(const bool is_typedef, const std::string& src, size_t& pos, StructDeclaration& var_decl, bool& is_decl)
 {
-    std::pair<std::string, int>            member;
-    std::list<std::pair<std::string, int>> members;
-    std::string                            line, token, next_token, type_name;
+    EnumDeclaration            member;
+    std::list<EnumDeclaration> members;
+    std::string                line, token, next_token, type_name;
 
     int  last_value     = -1;
     bool is_last_member = false;
@@ -1102,7 +1100,19 @@ bool TypeParser::ParseEnum(const bool is_typedef, const std::string& src, size_t
                 return false;
             }
 
-            Info("Add enum member: " + member.first);
+            // parse comments
+            size_t index = pos;
+            GetNextToken(src, index, token);
+            if (token == "/")
+            {
+                ParseComment(src, pos, member.m_comment);
+            }
+            else
+            {
+                member.m_comment = "";
+            }
+
+            Info("Add enum member: " + member.m_name);
             members.push_back(member);
         }
     }
@@ -1141,10 +1151,10 @@ bool TypeParser::ParseEnum(const bool is_typedef, const std::string& src, size_t
 //     1) false for definition format 1 and 2;
 //     2) true for declaration format 3-5 and "var_decl" argument being updated
 ///
-bool TypeParser::ParseStructUnion(const bool is_struct, const bool is_typedef, const std::string& src, size_t& pos, VariableDeclaration& var_decl, bool& is_decl)
+bool TypeParser::ParseStructUnion(const bool is_struct, const bool is_typedef, const std::string& src, size_t& pos, StructDeclaration& var_decl, bool& is_decl)
 {
-    VariableDeclaration            member;
-    std::list<VariableDeclaration> members;
+    StructDeclaration            member;
+    std::list<StructDeclaration> members;
 
     std::string line, token, next_token;
     std::string type_name, type_alias;
@@ -1262,7 +1272,7 @@ bool TypeParser::ParseStructUnion(const bool is_struct, const bool is_typedef, c
             {
                 // a nested struct/union variable declaration
                 // bool is_declare;
-                // VariableDeclaration var_decl;
+                // StructDeclaration var_decl;
                 if (!ParseStructUnion((kStructKeyword == type) ? true : false,
                                       false,
                                       src,
@@ -1292,6 +1302,13 @@ bool TypeParser::ParseStructUnion(const bool is_struct, const bool is_typedef, c
             }
             else
             {
+                // skip useless comments
+                if (token.at(0) == '/')
+                {
+                    SkipCurrentLine(src, pos, line);
+                    continue;
+                }
+
                 // regular struct/union member declaration, including format 5
                 if (!GetRestLine(src, pos, line))
                 {
@@ -1305,19 +1322,19 @@ bool TypeParser::ParseStructUnion(const bool is_struct, const bool is_typedef, c
                     return false;
                 }
 
-                // »ñÈ¡×¢ÊÍ
+                // parse comments
                 size_t index = pos;
                 GetNextToken(src, index, token);
                 if (token == "/")
                 {
-                    ParseComment(src, pos, member.comment);
+                    ParseComment(src, pos, member.m_comment);
                 }
                 else
                 {
-                    member.comment = "";
+                    member.m_comment = "";
                 }
 
-                Info("Add member: " + member.var_name);
+                Info("Add member: " + member.m_name);
                 members.push_back(member);
             }
         }
@@ -1362,10 +1379,10 @@ bool TypeParser::GetRestLine(const std::string& src, size_t& pos, std::string& l
 /// @param[in,out]	last_value	[in]the value of last enum member; [out]the value of current enum member
 /// @param[out]		decl		enum member declaration
 /// @param[out]		is_last_member	true for format 2 & 4, else false
-bool TypeParser::ParseEnumDeclaration(const std::string&           line,
-                                      int&                         last_value,
-                                      std::pair<std::string, int>& decl,
-                                      bool&                        is_last_member) const
+bool TypeParser::ParseEnumDeclaration(const std::string& line,
+                                      int&               last_value,
+                                      EnumDeclaration&   decl,
+                                      bool&              is_last_member) const
 {
     // whether this enum variable is the lastest member of the enum type
     is_last_member = false;
@@ -1376,12 +1393,12 @@ bool TypeParser::ParseEnumDeclaration(const std::string&           line,
     {
     case 1:
         is_last_member = true;
-        decl.second    = ++last_value;
+        decl.m_value   = ++last_value;
         break;
 
     case 2:
         assert(kComma == tokens[1].at(0));
-        decl.second = ++last_value;
+        decl.m_value = ++last_value;
         break;
 
     case 3:
@@ -1394,7 +1411,7 @@ bool TypeParser::ParseEnumDeclaration(const std::string&           line,
         }
 
         is_last_member = true;
-        decl.second = last_value = static_cast<int>(number);
+        decl.m_value = last_value = static_cast<int>(number);
         break;
 
     case 4:
@@ -1406,7 +1423,7 @@ bool TypeParser::ParseEnumDeclaration(const std::string&           line,
             return false;
         }
 
-        decl.second = last_value = static_cast<int>(number);
+        decl.m_value = last_value = static_cast<int>(number);
         break;
 
     default:
@@ -1414,7 +1431,7 @@ bool TypeParser::ParseEnumDeclaration(const std::string&           line,
         return false;
     }
 
-    decl.first = tokens[0];
+    decl.m_name = tokens[0];
     return true;
 }
 
@@ -1432,7 +1449,7 @@ bool TypeParser::ParseEnumDeclaration(const std::string&           line,
 ///
 /// @note type size are calculated will simple consideration of alignment
 /// @note can be improved with consideration of multiple demension array
-bool TypeParser::ParseDeclaration(const std::string& line, VariableDeclaration& decl) const
+bool TypeParser::ParseDeclaration(const std::string& line, StructDeclaration& decl) const
 {
     assert(!line.empty());
     if (line[line.length() - 1] != kSemicolon)
@@ -1442,26 +1459,26 @@ bool TypeParser::ParseDeclaration(const std::string& line, VariableDeclaration& 
     size_t                   size = SplitLineIntoTokens(line, tokens);
     assert(size >= 3); // even the simplest declaration contains 3 tokens: type var ;
 
-    size_t index    = 0;
-    decl.data_type  = tokens[index];
-    decl.is_pointer = false;
+    size_t index      = 0;
+    decl.m_type       = tokens[index];
+    decl.m_is_pointer = false;
 
-    size_t length   = GetTypeSize(decl.data_type);
+    size_t length     = GetTypeSize(decl.m_type);
     if (0 == length)
     {
-        Debug("Unknown data type - " + decl.data_type);
+        Debug("Unknown data type - " + decl.m_type);
         return false;
     }
 
     if (tokens[++index].at(0) == kAsterisk)
     {
-        decl.is_pointer = true;
-        length          = kWordSize_; // size of a pointer is 4 types on a 32-bit system
-        decl.var_name   = tokens[++index];
+        decl.m_is_pointer = true;
+        length            = kWordSize_; // size of a pointer is 4 types on a 32-bit system
+        decl.m_name       = tokens[++index];
     }
     else
     {
-        decl.var_name = tokens[index];
+        decl.m_name = tokens[index];
     }
 
     if (tokens[++index].at(0) == '[')
@@ -1469,7 +1486,7 @@ bool TypeParser::ParseDeclaration(const std::string& line, VariableDeclaration& 
         long number;
         if (IsNumericToken(tokens[++index], number))
         {
-            decl.array_size = number;
+            decl.m_size_array = number;
             length *= number;
         }
         else
@@ -1480,10 +1497,10 @@ bool TypeParser::ParseDeclaration(const std::string& line, VariableDeclaration& 
     }
     else
     {
-        decl.array_size = 0;
+        decl.m_size_array = 0;
     }
 
-    decl.var_size = length;
+    decl.m_size_value = length;
 
     return true;
 }
@@ -1532,17 +1549,17 @@ size_t TypeParser::SplitLineIntoTokens(std::string line, std::vector<std::string
 /// @note This method is based on kAlignment_ = 4 on 32-bit system since the padding algorithm can be very complicated
 /// considering the different alignment modulus/options of different compiler/OS/CPU
 /// About alignment, @see http://c-faq.com/struct/align.esr.html
-size_t TypeParser::PadStructMembers(std::list<VariableDeclaration>& members)
+size_t TypeParser::PadStructMembers(std::list<StructDeclaration>& members)
 {
-    std::list<VariableDeclaration>::iterator it    = members.begin();
-    size_t                                   total = 0;
-    size_t                                   size;
-    size_t                                   last_size = 0; ///< when last_size>0, padding is needed depending on later members; else no more padding is needed later
-    size_t                                   align_size, pad_size;
+    std::list<StructDeclaration>::iterator it    = members.begin();
+    size_t                                 total = 0;
+    size_t                                 size;
+    size_t                                 last_size = 0; ///< when last_size>0, padding is needed depending on later members; else no more padding is needed later
+    size_t                                 align_size, pad_size;
 
     while (it != members.end())
     {
-        size = it->var_size;
+        size = it->m_size_value;
 
         if (0 == (size % kAlignment_))
         { // current member itself is aligned
@@ -1567,13 +1584,13 @@ size_t TypeParser::PadStructMembers(std::list<VariableDeclaration>& members)
             // size can only be less than 4 (1 or 2) now unless it's an array
             if (size >= kAlignment_)
             {
-                if (it->array_size > 0)
+                if (it->m_size_array > 0)
                 {
                     Debug("TODO: add array support in PadStructMembers()");
                 }
                 else
                 {
-                    Error("Incorrect type size for " + it->var_name);
+                    Error("Incorrect type size for " + it->m_name);
                 }
 
                 return 0;
@@ -1628,12 +1645,12 @@ size_t TypeParser::PadStructMembers(std::list<VariableDeclaration>& members)
     return total;
 }
 
-size_t TypeParser::CalcUnionSize(const std::list<VariableDeclaration>& members) const
+size_t TypeParser::CalcUnionSize(const std::list<StructDeclaration>& members) const
 {
     size_t size = 0;
-    for (std::list<VariableDeclaration>::const_iterator it = members.begin(); it != members.end(); ++it)
+    for (std::list<StructDeclaration>::const_iterator it = members.begin(); it != members.end(); ++it)
     {
-        size = std::max(size, it->var_size);
+        size = max(size, it->m_size_value);
     }
 
     if (0 != size % kAlignment_)
@@ -1644,15 +1661,15 @@ size_t TypeParser::CalcUnionSize(const std::list<VariableDeclaration>& members) 
     return size;
 }
 
-VariableDeclaration TypeParser::MakePadField(const size_t size) const
+StructDeclaration TypeParser::MakePadField(const size_t size) const
 {
-    VariableDeclaration var;
+    StructDeclaration var;
 
-    var.var_name   = kPaddingFieldName;
-    var.var_size   = size;
-    var.data_type  = "char";
-    var.array_size = 0;
-    var.is_pointer = false;
+    var.m_name       = kPaddingFieldName;
+    var.m_size_value = size;
+    var.m_type       = "char";
+    var.m_size_array = 0;
+    var.m_is_pointer = false;
 
     return var;
 }
@@ -1661,7 +1678,7 @@ VariableDeclaration TypeParser::MakePadField(const size_t size) const
 ///
 /// For structs, the members are padded based on alignment, @see TypeParser::PadStructMembers
 ///
-void TypeParser::StoreStructUnionDef(const bool is_struct, const std::string& type_name, std::list<VariableDeclaration>& members)
+void TypeParser::StoreStructUnionDef(const bool is_struct, const std::string& type_name, std::list<StructDeclaration>& members)
 {
     size_t size;
 

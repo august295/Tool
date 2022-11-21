@@ -4,3 +4,7 @@ include/ParseHeader
 
 # User Configuration
 *.user
+
+# VSCode Format
+.vscode
+.clang-format

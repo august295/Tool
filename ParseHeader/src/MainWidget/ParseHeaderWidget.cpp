@@ -21,7 +21,7 @@ struct ParseHeaderWidget::ParseHeaderWidgetPrivate
     std::string          _CurrFile;            // 当前操作文件
     StructOperateWidget* _StructOperateWidget; // 结构体操作界面
 
-    QMenu* TreeRightMenu;   // 树右键菜单
+    QMenu* TreeRightMenu; // 树右键菜单
 };
 
 ParseHeaderWidget::ParseHeaderWidget(QWidget* parent)
@@ -42,9 +42,9 @@ ParseHeaderWidget::ParseHeaderWidget(QWidget* parent)
     connect(ui.treeWidget, &QTreeWidget::customContextMenuRequested, this, &ParseHeaderWidget::ShowTreeRightMenu);
 
     // 绑定按钮
-    connect(ui.pushButton_Flush, &QPushButton::clicked, this, &ParseHeaderWidget::on_pushButton_Flush);
-    connect(ui.pushButton_Select, &QPushButton::clicked, this, &ParseHeaderWidget::on_pushButton_Select);
-    connect(ui.pushButton_Save, &QPushButton::clicked, this, &ParseHeaderWidget::on_pushButton_Save);
+    connect(ui.pushButton_Flush, &QPushButton::clicked, this, &ParseHeaderWidget::DataFlush);
+    connect(ui.pushButton_Select, &QPushButton::clicked, this, &ParseHeaderWidget::DataSelect);
+    connect(ui.pushButton_Save, &QPushButton::clicked, this, &ParseHeaderWidget::DataSave);
 }
 
 ParseHeaderWidget::~ParseHeaderWidget()
@@ -60,7 +60,7 @@ void ParseHeaderWidget::ParseFiles()
 {
     // 解析指定文件夹下头文件
     std::set<std::string> inc_paths;
-    inc_paths.insert("../../src/resources");
+    inc_paths.insert("../../../src/resources");
 
     for (auto path : inc_paths)
     {
@@ -103,7 +103,7 @@ void ParseHeaderWidget::InitTreeWidget(const std::string& selectStr /*= ""*/)
     ui.treeWidget->expandAll();
 
     // 触发器
-    connect(ui.treeWidget, &QTreeWidget::itemClicked, this, &ParseHeaderWidget::on_tableWidget_itemClicked);
+    connect(ui.treeWidget, &QTreeWidget::itemClicked, this, &ParseHeaderWidget::DataShow);
 }
 
 void ParseHeaderWidget::InitTableWidget()
@@ -141,18 +141,18 @@ void ParseHeaderWidget::GetStructTypeList(QStringList& structTypeList)
     }
 }
 
-void ParseHeaderWidget::on_pushButton_Flush()
+void ParseHeaderWidget::DataFlush()
 {
     InitTreeWidget();
 }
 
-void ParseHeaderWidget::on_pushButton_Select()
+void ParseHeaderWidget::DataSelect()
 {
     std::string selectStr = ui.lineEdit->text().toStdString();
     InitTreeWidget(selectStr);
 }
 
-void ParseHeaderWidget::on_pushButton_Save()
+void ParseHeaderWidget::DataSave()
 {
     for (auto& file : _p->_FileMap)
     {
@@ -205,16 +205,47 @@ void ParseHeaderWidget::on_pushButton_Save()
     }
 }
 
-void ParseHeaderWidget::ShowTreeRightMenu(const QPoint &pos)
+void ParseHeaderWidget::DataShow(QTreeWidgetItem* item, int column)
 {
-    _p->TreeRightMenu = new QMenu;
+    Q_UNUSED(column);
+    std::string file = item->data(0, Qt::UserRole).toByteArray().data();
+    std::string stru = item->text(0).toStdString();
+    ShowTableStruct(file, stru);
+}
+
+void ParseHeaderWidget::ShowTableStruct(const std::string& file, const std::string& stru)
+{
+    TypeParser parser = _p->_TypeParserMap[file];
+
+    ui.tableWidget->setRowCount(0);
+    int i = 0;
+    for (auto var : parser.struct_defs_[stru])
+    {
+        if (kPaddingFieldName != var.m_name)
+        {
+            ui.tableWidget->insertRow(ui.tableWidget->rowCount());
+            ui.tableWidget->setItem(i, 0, new QTableWidgetItem(QString::fromStdString(var.m_type)));
+            QTableWidgetItem* checkBox = new QTableWidgetItem();
+            var.m_is_pointer ? checkBox->setCheckState(Qt::Checked) : checkBox->setCheckState(Qt::Unchecked);
+            checkBox->setFlags(Qt::ItemIsEnabled);
+            ui.tableWidget->setItem(i, 1, checkBox);
+            ui.tableWidget->setItem(i, 2, new QTableWidgetItem(QString::fromStdString(var.m_name)));
+            ui.tableWidget->setItem(i, 3, new QTableWidgetItem(QString::fromStdString(var.m_comment)));
+            i++;
+        }
+    }
+}
+
+void ParseHeaderWidget::ShowTreeRightMenu(const QPoint& pos)
+{
+    _p->TreeRightMenu  = new QMenu;
     QAction* addAction = new QAction(QString("增加"));
     connect(addAction, &QAction::triggered, this, &ParseHeaderWidget::AddStruct);
 
-    QTreeWidgetItem* item = ui.treeWidget->itemAt(pos);//关键
-    if(item)
+    QTreeWidgetItem* item = ui.treeWidget->itemAt(pos); //关键
+    if (item)
     {
-        switch(item->type())
+        switch (item->type())
         {
         case NODE:
             _p->TreeRightMenu->addAction(addAction);
@@ -231,7 +262,7 @@ void ParseHeaderWidget::ShowTreeRightMenu(const QPoint &pos)
 void ParseHeaderWidget::AddStruct()
 {
     QTreeWidgetItem* item = ui.treeWidget->currentItem();
-    _p->_CurrFile = item->data(0, Qt::UserRole).toByteArray().data();
+    _p->_CurrFile         = item->data(0, Qt::UserRole).toByteArray().data();
 
     if (nullptr == _p->_StructOperateWidget)
     {
@@ -245,50 +276,19 @@ void ParseHeaderWidget::AddStruct()
     _p->_StructOperateWidget->show();
 }
 
-void ParseHeaderWidget::on_tableWidget_itemClicked(QTreeWidgetItem* item, int column)
-{
-    Q_UNUSED(column);
-    std::string file = item->data(0, Qt::UserRole).toByteArray().data();
-    std::string stru = item->text(0).toStdString();
-    ShowTableStruct(file, stru);
-}
-
-void ParseHeaderWidget::ShowTableStruct(const std::string& file, const std::string& stru)
-{
-    TypeParser parser = _p->_TypeParserMap[file];
-
-    ui.tableWidget->setRowCount(0);
-    int i = 0;
-    for (auto var : parser.struct_defs_[stru])
-    {
-        if (kPaddingFieldName != var.var_name)
-        {
-            ui.tableWidget->insertRow(ui.tableWidget->rowCount());
-            ui.tableWidget->setItem(i, 0, new QTableWidgetItem(QString::fromStdString(var.data_type)));
-            QTableWidgetItem* checkBox = new QTableWidgetItem();
-            var.is_pointer ? checkBox->setCheckState(Qt::Checked) : checkBox->setCheckState(Qt::Unchecked);
-            checkBox->setFlags(Qt::ItemIsEnabled);
-            ui.tableWidget->setItem(i, 1, checkBox);
-            ui.tableWidget->setItem(i, 2, new QTableWidgetItem(QString::fromStdString(var.var_name)));
-            ui.tableWidget->setItem(i, 3, new QTableWidgetItem(QString::fromStdString(var.comment)));
-            i++;
-        }
-    }
-}
-
 void ParseHeaderWidget::AddStructFinish()
 {
     // 获取界面数据并保存
-    std::string                    structName = _p->_StructOperateWidget->ui.lineEdit_Name->text().toStdString();
-    std::list<VariableDeclaration> varList;
+    std::string                  structName = _p->_StructOperateWidget->ui.lineEdit_Name->text().toStdString();
+    std::list<StructDeclaration> varList;
     for (int i = 0; i < _p->_StructOperateWidget->ui.tableWidget->rowCount(); i++)
     {
-        QTableWidget*       tableWidget = _p->_StructOperateWidget->ui.tableWidget;
-        VariableDeclaration var;
-        var.data_type  = tableWidget->item(i, 0)->text().toLocal8Bit().data();
-        var.is_pointer = tableWidget->item(i, 1)->checkState();
-        var.var_name   = tableWidget->item(i, 2)->text().toLocal8Bit().data();
-        var.comment    = tableWidget->item(i, 3)->text().toLocal8Bit().data();
+        QTableWidget*     tableWidget = _p->_StructOperateWidget->ui.tableWidget;
+        StructDeclaration var;
+        var.m_type       = tableWidget->item(i, 0)->text().toLocal8Bit().data();
+        var.m_is_pointer = tableWidget->item(i, 1)->checkState();
+        var.m_name       = tableWidget->item(i, 2)->text().toLocal8Bit().data();
+        var.m_comment    = tableWidget->item(i, 3)->text().toLocal8Bit().data();
         varList.push_back(var);
     }
     auto iter = _p->_TypeParserMap.find(_p->_CurrFile);
@@ -304,7 +304,7 @@ void ParseHeaderWidget::AddStructFinish()
     ShowTableStruct(_p->_CurrFile, structName);
 }
 
-void ParseHeaderWidget::PackageStruct(const std::string& structName, const std::list<VariableDeclaration>& varList, std::vector<std::string>& lineVec)
+void ParseHeaderWidget::PackageStruct(const std::string& structName, const std::list<StructDeclaration>& varList, std::vector<std::string>& lineVec)
 {
     std::string temp;
     temp = "struct " + structName;
@@ -314,14 +314,14 @@ void ParseHeaderWidget::PackageStruct(const std::string& structName, const std::
     lineVec.push_back("{");
     for (auto var : varList)
     {
-        temp += "\t" + var.data_type;
-        if (var.is_pointer)
+        temp += "\t" + var.m_type;
+        if (var.m_is_pointer)
         {
             temp += "*";
         }
-        temp += " " + var.var_name;
+        temp += " " + var.m_name;
         temp += ";";
-        temp += " // " + var.comment;
+        temp += " // " + var.m_comment;
         lineVec.push_back(temp);
         temp.clear();
     }

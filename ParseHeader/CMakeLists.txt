@@ -15,9 +15,13 @@ set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(BUILD_DIR ${ROOT_DIR}/build)
 
 # 输出目录
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BUILD_DIR}/lib) # .exe and .dll
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BUILD_DIR}/lib) # .so and .dylib
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BUILD_DIR}/bin) # .lib and .a
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${BUILD_DIR}/lib/debug) # .exe and .dll
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG ${BUILD_DIR}/lib/debug) # .so and .dylib
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${BUILD_DIR}/bin/debug) # .lib and .a
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${BUILD_DIR}/lib/release) # .exe and .dll
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${BUILD_DIR}/lib/release) # .so and .dylib
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${BUILD_DIR}/bin/release) # .lib and .a
+set(CMAKE_DEBUG_POSTFIX "d")
 
 # 添加子目录，子目录下必须有CMakeLists.txt
 add_subdirectory(src)
