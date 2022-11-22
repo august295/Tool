@@ -13,8 +13,6 @@
 #include <string>     // std::string
 #include <time.h>     // time
 
-#include "dirent.h"
-
 // convert to upper case
 static inline std::string upper(std::string& str)
 {
@@ -81,7 +79,7 @@ static inline std::string rands()
     return os.str();
 }
 
-// 显示日志
+// mini log
 enum LogLevels
 {
     kError,
@@ -89,8 +87,7 @@ enum LogLevels
     kInfo,
 };
 static LogLevels g_log_level = kInfo;
-
-static void Log(enum LogLevels level, std::string msg)
+static void      Log(enum LogLevels level, std::string msg)
 {
     if (level > g_log_level)
         return;
@@ -106,65 +103,8 @@ static void Log(enum LogLevels level, std::string msg)
     os << msg;
     std::cout << os.str() << std::endl;
 }
-
-// 日志函数
 static void Error(std::string msg) { Log(kError, msg); }
 static void Debug(std::string msg) { Log(kDebug, msg); }
 static void Info(std::string msg) { Log(kInfo, msg); }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// <summary>	获取路径下所有 .h 文件. </summary>
-///
-/// <remarks>	August295, 2022/9/6. </remarks>
-///
-/// <param name="folder">	文件夹路径. </param>
-////////////////////////////////////////////////////////////////////////////////////////////////////
-static void FindFiles(const std::string& folder, std::map<std::string, std::map<std::string, bool>>& fileMap)
-{
-    DIR*           dir;
-    struct dirent* ent;
-    struct stat    entrystat;
-
-    if ((dir = opendir(folder.c_str())) != NULL)
-    {
-        while ((ent = readdir(dir)) != NULL)
-        {
-            std::string name(ent->d_name);
-            if (name.compare(".") == 0 || name.compare("..") == 0)
-                continue;
-
-            name = folder + "/" + name;
-            if (0 == stat(name.c_str(), &entrystat))
-            {
-                if (S_ISDIR(entrystat.st_mode))
-                {
-                    Info("Searching folder: " + name);
-                    FindFiles(name, fileMap);
-                }
-                else
-                {
-                    if (name.length() > 2 && name.substr(name.length() - 2, 2).compare(".h") == 0)
-                    {
-                        fileMap.emplace(name, std::map<std::string, bool>());
-                        Debug("Found header file: " + name);
-                    }
-                    else
-                    {
-                        Info("Ignoring file: " + name);
-                    }
-                }
-            }
-            else
-            {
-                Error("failed to stat file/folder: " + name);
-            }
-        }
-        closedir(dir);
-    }
-    else
-    {
-        Error("failed to open folder: " + folder);
-    }
-}
 
 #endif // _UTILITY_H_

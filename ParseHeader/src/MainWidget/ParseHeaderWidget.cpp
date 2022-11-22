@@ -2,7 +2,7 @@
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QMenu>
 
-#include "ParseHeader/utility.h"
+#include <DataManager/DataManager.h>
 
 #include "FileManage.h"
 #include "ParseHeaderWidget.h"
@@ -11,29 +11,35 @@
 struct ParseHeaderWidget::ParseHeaderWidgetPrivate
 {
     ParseHeaderWidgetPrivate()
-        : _StructOperateWidget(nullptr)
     {
+        m_StructOperateWidget = nullptr;
+        m_TreeRightMenu       = nullptr;
+    }
+    ~ParseHeaderWidgetPrivate()
+    {
+        delete m_StructOperateWidget;
+        delete m_TreeRightMenu;
     }
 
-    std::map<std::string, TypeParser>                  _TypeParserMap; // 头文件解析 map<文件名, 解析类>
-    std::map<std::string, std::map<std::string, bool>> _FileMap;       // 需解析文件 map<文件名, map<修改结构体, 是否保存>>
+    std::string          m_CurrFile;            // 当前操作文件
+    StructOperateWidget* m_StructOperateWidget; // 结构体操作界面
 
-    std::string          _CurrFile;            // 当前操作文件
-    StructOperateWidget* _StructOperateWidget; // 结构体操作界面
-
-    QMenu* TreeRightMenu; // 树右键菜单
+    QMenu* m_TreeRightMenu; // 树右键菜单
 };
 
 ParseHeaderWidget::ParseHeaderWidget(QWidget* parent)
     : QWidget(parent)
-    , _p(new ParseHeaderWidgetPrivate)
+    , m_p(new ParseHeaderWidgetPrivate)
 {
     ui.setupUi(this);
-    setWindowTitle(QString("文件转换"));
+    setWindowTitle(QString("文件解析"));
     setMinimumSize(1200, 800);
 
+    // 优先解析文件
+    std::set<std::string> includePaths({"../../../test"});
+    DataManager::GetInstance()->ParseFiles(includePaths);
+
     // 初始化界面
-    ParseFiles();
     InitTreeWidget();
     InitTableWidget();
 
@@ -49,29 +55,10 @@ ParseHeaderWidget::ParseHeaderWidget(QWidget* parent)
 
 ParseHeaderWidget::~ParseHeaderWidget()
 {
-    if (_p)
+    if (m_p)
     {
-        delete _p;
-        _p = nullptr;
-    }
-}
-
-void ParseHeaderWidget::ParseFiles()
-{
-    // 解析指定文件夹下头文件
-    std::set<std::string> inc_paths;
-    inc_paths.insert("../../../src/resources");
-
-    for (auto path : inc_paths)
-    {
-        FindFiles(path, _p->_FileMap);
-        for (auto file : _p->_FileMap)
-        {
-            std::string filename = file.first;
-            TypeParser  parser;
-            parser.ParseFile(filename);
-            _p->_TypeParserMap.emplace(filename, parser);
-        }
+        delete m_p;
+        m_p = nullptr;
     }
 }
 
@@ -82,7 +69,8 @@ void ParseHeaderWidget::InitTreeWidget(const std::string& selectStr /*= ""*/)
     ui.treeWidget->clear();
 
     // 显示到界面
-    for (auto parser : _p->_TypeParserMap)
+    auto typeParserMap = DataManager::GetInstance()->GetTypeParserMap();
+    for (auto parser : typeParserMap)
     {
         std::string      filename = parser.first;
         QTreeWidgetItem* item     = new QTreeWidgetItem(NODE);
@@ -119,14 +107,16 @@ void ParseHeaderWidget::InitTableWidget()
     ui.tableWidget->setPalette(QPalette(Qt::gray));                     // 设置隔行变色的颜色
 }
 
-void ParseHeaderWidget::GetStructTypeList(QStringList& structTypeList)
+QStringList ParseHeaderWidget::GetStructTypeList()
 {
+    QStringList structTypeList;
     // 基础类型
     for (auto basic : data_types)
     {
         structTypeList.push_back(QString::fromStdString(basic));
     }
-    for (auto parser : _p->_TypeParserMap)
+    auto typeParserMap = DataManager::GetInstance()->GetTypeParserMap();
+    for (auto parser : typeParserMap)
     {
         // 结构体类型
         for (auto structDef : parser.second.struct_defs_)
@@ -139,6 +129,7 @@ void ParseHeaderWidget::GetStructTypeList(QStringList& structTypeList)
             structTypeList.push_back(QString::fromStdString(enumDef.first));
         }
     }
+    return structTypeList;
 }
 
 void ParseHeaderWidget::DataFlush()
@@ -154,7 +145,8 @@ void ParseHeaderWidget::DataSelect()
 
 void ParseHeaderWidget::DataSave()
 {
-    for (auto& file : _p->_FileMap)
+    auto fileMap = DataManager::GetInstance()->GetFileMap();
+    for (auto& file : fileMap)
     {
         std::string                  filename  = file.first;
         std::map<std::string, bool>& structVec = file.second;
@@ -162,8 +154,9 @@ void ParseHeaderWidget::DataSave()
         {
             continue;
         }
-        TypeParser               parser      = _p->_TypeParserMap[filename];
-        std::vector<std::string> fileLineVec = FileManage::GetInstance()->GetFileContent(filename);
+        auto       typeParserMap = DataManager::GetInstance()->GetTypeParserMap();
+        TypeParser parser        = typeParserMap[filename];
+        auto       fileLineVec   = FileManage::GetInstance()->GetFileContent(filename);
         for (size_t i = 0; i < fileLineVec.size(); i++)
         {
             for (auto& stru : structVec)
@@ -213,9 +206,10 @@ void ParseHeaderWidget::DataShow(QTreeWidgetItem* item, int column)
     ShowTableStruct(file, stru);
 }
 
-void ParseHeaderWidget::ShowTableStruct(const std::string& file, const std::string& stru)
+void ParseHeaderWidget::ShowTableStruct(const std::string& filename, const std::string& stru)
 {
-    TypeParser parser = _p->_TypeParserMap[file];
+    auto       typeParserMap = DataManager::GetInstance()->GetTypeParserMap();
+    TypeParser parser        = typeParserMap[filename];
 
     ui.tableWidget->setRowCount(0);
     int i = 0;
@@ -238,8 +232,8 @@ void ParseHeaderWidget::ShowTableStruct(const std::string& file, const std::stri
 
 void ParseHeaderWidget::ShowTreeRightMenu(const QPoint& pos)
 {
-    _p->TreeRightMenu  = new QMenu;
-    QAction* addAction = new QAction(QString("增加"));
+    m_p->m_TreeRightMenu = new QMenu;
+    QAction* addAction   = new QAction(QString("增加"));
     connect(addAction, &QAction::triggered, this, &ParseHeaderWidget::AddStruct);
 
     QTreeWidgetItem* item = ui.treeWidget->itemAt(pos); //关键
@@ -248,42 +242,41 @@ void ParseHeaderWidget::ShowTreeRightMenu(const QPoint& pos)
         switch (item->type())
         {
         case NODE:
-            _p->TreeRightMenu->addAction(addAction);
+            m_p->m_TreeRightMenu->addAction(addAction);
             break;
         default:
             break;
         }
     }
     //移动菜单出现在鼠标点击的位置
-    _p->TreeRightMenu->move(ui.treeWidget->cursor().pos());
-    _p->TreeRightMenu->show();
+    m_p->m_TreeRightMenu->move(ui.treeWidget->cursor().pos());
+    m_p->m_TreeRightMenu->show();
 }
 
 void ParseHeaderWidget::AddStruct()
 {
     QTreeWidgetItem* item = ui.treeWidget->currentItem();
-    _p->_CurrFile         = item->data(0, Qt::UserRole).toByteArray().data();
+    m_p->m_CurrFile       = item->data(0, Qt::UserRole).toByteArray().data();
 
-    if (nullptr == _p->_StructOperateWidget)
+    if (nullptr == m_p->m_StructOperateWidget)
     {
-        _p->_StructOperateWidget = new StructOperateWidget;
-        connect(_p->_StructOperateWidget->ui.pushButton_Finish, &QPushButton::clicked, this, &ParseHeaderWidget::AddStructFinish);
+        m_p->m_StructOperateWidget = new StructOperateWidget;
+        connect(m_p->m_StructOperateWidget->ui.pushButton_Finish, &QPushButton::clicked, this, &ParseHeaderWidget::AddStructFinish);
     }
-    QStringList structTypeList;
-    GetStructTypeList(structTypeList);
-    _p->_StructOperateWidget->UpdateStructTypeList(structTypeList);
-    _p->_StructOperateWidget->InitTableWidget();
-    _p->_StructOperateWidget->show();
+    QStringList structTypeList = this->GetStructTypeList();
+    m_p->m_StructOperateWidget->UpdateStructTypeList(structTypeList);
+    m_p->m_StructOperateWidget->InitTableWidget();
+    m_p->m_StructOperateWidget->show();
 }
 
 void ParseHeaderWidget::AddStructFinish()
 {
     // 获取界面数据并保存
-    std::string                  structName = _p->_StructOperateWidget->ui.lineEdit_Name->text().toStdString();
+    std::string                  structName = m_p->m_StructOperateWidget->ui.lineEdit_Name->text().toStdString();
     std::list<StructDeclaration> varList;
-    for (int i = 0; i < _p->_StructOperateWidget->ui.tableWidget->rowCount(); i++)
+    for (int i = 0; i < m_p->m_StructOperateWidget->ui.tableWidget->rowCount(); i++)
     {
-        QTableWidget*     tableWidget = _p->_StructOperateWidget->ui.tableWidget;
+        QTableWidget*     tableWidget = m_p->m_StructOperateWidget->ui.tableWidget;
         StructDeclaration var;
         var.m_type       = tableWidget->item(i, 0)->text().toLocal8Bit().data();
         var.m_is_pointer = tableWidget->item(i, 1)->checkState();
@@ -291,17 +284,18 @@ void ParseHeaderWidget::AddStructFinish()
         var.m_comment    = tableWidget->item(i, 3)->text().toLocal8Bit().data();
         varList.push_back(var);
     }
-    auto iter = _p->_TypeParserMap.find(_p->_CurrFile);
-    if (iter != _p->_TypeParserMap.end())
+    auto typeParserMap = DataManager::GetInstance()->GetTypeParserMap();
+    auto iter          = typeParserMap.find(m_p->m_CurrFile);
+    if (iter != typeParserMap.end())
     {
         iter->second.struct_defs_.emplace(structName, varList);
     }
 
     // 表示文件修改
-    _p->_FileMap[_p->_CurrFile].emplace(structName, false);
-    _p->_StructOperateWidget->hide();
+    DataManager::GetInstance()->SetFileMap(m_p->m_CurrFile, structName, false);
+    m_p->m_StructOperateWidget->hide();
     InitTreeWidget();
-    ShowTableStruct(_p->_CurrFile, structName);
+    ShowTableStruct(m_p->m_CurrFile, structName);
 }
 
 void ParseHeaderWidget::PackageStruct(const std::string& structName, const std::list<StructDeclaration>& varList, std::vector<std::string>& lineVec)

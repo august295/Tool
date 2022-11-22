@@ -11,8 +11,8 @@
 #include <sys/types.h> // opendir/readdir
 #endif
 
-#include "TypeParser.h"
 #include "utility.h"
+#include "TypeParser.h"
 
 TypeParser::~TypeParser(void)
 {

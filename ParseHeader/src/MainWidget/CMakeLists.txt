@@ -6,7 +6,7 @@ set(AbsolutePathProject ${CMAKE_CURRENT_SOURCE_DIR})
 # Qt 库
 set(QT_LIBRARY_LIST Core Gui Widgets)
 # 链接库
-set(SELF_LIBRARY_LIST ParseHeader)
+set(SELF_LIBRARY_LIST ParseHeader DataManager)
 
 # 创建项目
 CreateTarget(${AbsolutePathProject} "Exe" "${SELF_LIBRARY_LIST}")

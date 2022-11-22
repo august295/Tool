@@ -19,13 +19,6 @@ public:
     ~ParseHeaderWidget();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// <summary>	解析文件. </summary>
-    ///
-    /// <remarks>	August295, 2022/9/7. </remarks>
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    void ParseFiles();
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// <summary>	初始化界面. </summary>
     ///
     /// <remarks>	August295, 2022/9/6. </remarks>
@@ -38,9 +31,9 @@ public:
     ///
     /// <remarks>	August295, 2022/9/8. </remarks>
     ///
-    /// <param name="structTypeList">	[in,out] 结构体类型列表. </param>
+    /// <return>	结构体类型列表. </param>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    void GetStructTypeList(QStringList& structTypeList);
+    QStringList GetStructTypeList();
 
 public slots:
     ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -60,7 +53,7 @@ public slots:
     /// <remarks>	August295, 2022/9/6. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     void DataShow(QTreeWidgetItem* item, int column);
-    void ShowTableStruct(const std::string& file, const std::string& stru);
+    void ShowTableStruct(const std::string& filename, const std::string& stru);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// <summary>	右键菜单. </summary>
@@ -92,5 +85,5 @@ private:
     Ui::ParseHeaderClass ui;
 
     struct ParseHeaderWidgetPrivate;
-    ParseHeaderWidgetPrivate* _p;
+    ParseHeaderWidgetPrivate* m_p;
 };
