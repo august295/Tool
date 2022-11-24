@@ -6,9 +6,9 @@
 
 #include <QtWidgets/QWidget>
 
-#include "ParseHeader/TypeParser.h"
-
 #include "ui_ParseHeaderWidget.h"
+
+struct StructDeclaration;
 
 class ParseHeaderWidget : public QWidget
 {
@@ -23,37 +23,31 @@ public:
     ///
     /// <remarks>	August295, 2022/9/6. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    void InitTreeWidget(const std::string& selectStr = "");
+    void InitWidget();
+    void InitTreeWidget();
     void InitTableWidget();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// <summary>	获取结构体类型列表. </summary>
+    /// <summary>	数据显示. </summary>
     ///
-    /// <remarks>	August295, 2022/9/8. </remarks>
-    ///
-    /// <return>	结构体类型列表. </param>
+    /// <remarks>	August295, 2022/11/24. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    QStringList GetStructTypeList();
+    void ShowTreeWidget(const std::string& selectStr = "");
+    void ShowTableStruct(const std::string& fileName, const std::string& typeName);
+    void ShowTableEnum(const std::string& fileName, const std::string& typeName);
 
 public slots:
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// <summary>	结构体操作. </summary>
+    /// <summary>	数据类型数操作. </summary>
     ///		1. 刷新结构体
     ///		2. 查询结构体
     ///     3. 保存到文件
     /// <remarks>	August295, 2022/9/6. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    void DataFlush();
-    void DataSelect();
-    void DataSave();
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// <summary>	结构体显示. </summary>
-    ///
-    /// <remarks>	August295, 2022/9/6. </remarks>
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    void DataShow(QTreeWidgetItem* item, int column);
-    void ShowTableStruct(const std::string& filename, const std::string& stru);
+    void SlotDataTypeFlush();
+    void SlotDataTypeSelect();
+    void SlotDataTypeSave();
+    void SlotDataTypeShow(QTreeWidgetItem* item, int column);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// <summary>	右键菜单. </summary>
@@ -62,9 +56,9 @@ public slots:
     ///     3. 完成结构体添加
     /// <remarks>	August295, 2022/9/7. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    void ShowTreeRightMenu(const QPoint& pos);
-    void AddStruct();
-    void AddStructFinish();
+    void SlotTreeRightMenu(const QPoint& pos);
+    void SlotAddStruct();
+    void SlotAddStructFinish();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// <summary>	组装结构体字符串. </summary>
@@ -77,8 +71,12 @@ public:
     enum NodeType
     {
         ROOT = QTreeWidgetItem::UserType,
-        NODE,
-        LEAF,
+        NODE_STRUCT,
+        NODE_ENUM,
+        NODE_CONST,
+        LEAF_STRUCT,
+        LEAF_ENUM,
+        LEAF_CONST,
     };
 
 private:

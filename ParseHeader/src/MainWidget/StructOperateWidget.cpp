@@ -5,7 +5,7 @@ StructOperateWidget::StructOperateWidget(QWidget* parent /*= Q_NULLPTR*/)
     : QWidget(parent)
 {
     ui.setupUi(this);
-    setWindowTitle(QString("结构体操作"));
+    setWindowTitle(tr("结构体操作"));
     setMinimumSize(800, 800);
 
     // 初始化界面
@@ -30,7 +30,7 @@ void StructOperateWidget::InitTableWidget()
     ui.tableWidget->clearContents();
     ui.tableWidget->setRowCount(0);
 
-    QStringList header = {QString("成员属性"), QString("是否指针"), QString("成员名称"), QString("备注")};
+    QStringList header = {tr("成员属性"), tr("是否指针"), tr("成员名称"), tr("备注")};
     ui.tableWidget->setColumnCount(header.size());
     ui.tableWidget->setHorizontalHeaderLabels(header);
     ui.tableWidget->horizontalHeader()->setStyleSheet("QHeaderView::section{background:gray;}");

@@ -105,3 +105,27 @@ void DataManager::SetFileMap(const std::string& fileName, const std::string& str
 {
     m_p->m_FileMap[fileName].emplace(structName, change);
 }
+
+std::list<std::string> DataManager::GetTypeList()
+{
+    std::list<std::string> typeList;
+    // 基础类型
+    for (auto basic : data_types)
+    {
+        typeList.push_back(basic);
+    }
+    for (auto parser : m_p->m_TypeParserMap)
+    {
+        // 结构体类型
+        for (auto structDef : parser.second.struct_defs_)
+        {
+            typeList.push_back(structDef.first);
+        }
+        // 枚举类型
+        for (auto enumDef : parser.second.enum_defs_)
+        {
+            typeList.push_back(enumDef.first);
+        }
+    }
+    return typeList;
+}
