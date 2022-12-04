@@ -30,46 +30,54 @@
 
 ```cpp
 ParseHeader
-|
+|   .clang-format
+|   .gitignore
 |   cmake-vs2017.bat
 |   CMakeLists.txt
 |   module.cmake
 |   module_qt.cmake
 |   README.md
-|   
-\---src
-    |   CMakeLists.txt
+|
++---src
+|   |   CMakeLists.txt
+|   |
+|   +---DataManager
+|   |       CMakeLists.txt
+|   |       DataManager.cpp
+|   |       DataManager.h
+|   |
+|   +---MainWidget
+|   |       CMakeLists.txt
+|   |       DelegateComboBox.cpp
+|   |       DelegateComboBox.h
+|   |       FileManage.cpp
+|   |       FileManage.h
+|   |       main.cpp
+|   |       ParseHeaderWidget.cpp
+|   |       ParseHeaderWidget.h
+|   |       ParseHeaderWidget.ui
+|   |       StructOperateWidget.cpp
+|   |       StructOperateWidget.h
+|   |       StructOperateWidget.ui
+|   |
+|   \---ParseHeader
+|           CMakeLists.txt
+|           defines.h
+|           dirent.h
+|           TypeParser.cpp
+|           TypeParser.h
+|           utility.h
+|
+\---test
+    |   Test.h
     |
-    +---MainWidget
-    |       CMakeLists.txt
-    |       DelegateComboBox.cpp
-    |       DelegateComboBox.h
-    |       FileManage.cpp
-    |       FileManage.h
-    |       main.cpp
-    |       ParseHeaderWidget.cpp
-    |       ParseHeaderWidget.h
-    |       ParseHeaderWidget.ui
-    |       StructOperateWidget.cpp
-    |       StructOperateWidget.h
-    |       StructOperateWidget.ui
-    |
-    +---ParseHeader
-    |       CMakeLists.txt
-    |       defines.h
-    |       dirent.h
-    |       TypeParser.cpp
-    |       TypeParser.h
-    |       utility.h
-    |
-    \---resources
+    \---Employee
             Employee.h
-            struct.h
 ```
 
 ### 2.2 项目生成
 
-其中源代码在 `src` 中，测试头文件在 `resources` 中。
+其中源代码在 `src` 中。
 
 1. 使用 `Qt Creator4` 导入 `src/CMakeLists.txt`
 2. 采用 `cmake-vs2017.bat` 生成项目，或者使用 `cmake-gui` 图形界面生成项目，再用 `Visual Studio 2017` 打开
@@ -90,28 +98,7 @@ ParseHeader
 
 每个文件中都有详细的注释，以供使用和修改。
 
-读取的文件路径是 `./src/resources` 下的头文件，可以在 `Parse_CHeader_Qt.cpp` 中 59 行进行修改。
-
-```cpp
-void ParseHeaderWidget::ParseFiles()
-{
-	// 解析指定文件夹下头文件
-	std::set<std::string> inc_paths;
-	inc_paths.insert("../../src/resources");
-
-	for (auto path : inc_paths)
-	{
-		FindFiles(path, _p->_FileMap);
-		for (auto file : _p->_FileMap)
-		{
-			std::string filename = file.first;
-			TypeParser parser;
-			parser.ParseFile(filename);
-			_p->_TypeParserMap.emplace(filename, parser);
-		}
-	}
-}
-```
+- 读取的文件路径是 `test` 下的头文件
 
 
 

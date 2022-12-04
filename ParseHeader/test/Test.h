@@ -1,23 +1,22 @@
 #ifndef __STRUCT_H__
 #define __STRUCT_H__
 
+#include <string>
+
 // 枚举
-enum Topic
-{
+enum Topic {
     MUSIC, // 音乐
     GAME,  // 游戏
     BOOK,  // 书籍
 };
 
 // Phone
-typedef struct Phone
-{
+typedef struct Phone {
     int m_type;
 } Phone;
 
 // People
-typedef struct People
-{
+typedef struct People {
     char m_sex;    /* 性别 */
     int  m_age;    /*
     

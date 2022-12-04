@@ -17,8 +17,7 @@
 ///
 /// <remarks>	August295, 2022/9/5. </remarks>
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-struct StructDeclaration
-{
+struct StructDeclaration {
     std::string m_type;       ///< name of a data type, either basic type or user-defined type
     std::string m_name;       ///< variable name
     std::string m_comment;    ///< variable m_comment
@@ -37,8 +36,7 @@ struct StructDeclaration
 ///
 /// <remarks>	August295, 2022/9/5. </remarks>
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-struct EnumDeclaration
-{
+struct EnumDeclaration {
     std::string m_name;    ///< variable name
     std::string m_comment; ///< variable m_comment
     int         m_value;   ///< variable value
@@ -49,8 +47,7 @@ struct EnumDeclaration
 ///
 /// <remarks>	August295, 2022/9/5. </remarks>
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-enum TokenTypes
-{
+enum TokenTypes {
     kUnresolvedToken,
 
     // keywords
@@ -75,12 +72,10 @@ enum TokenTypes
 ///
 /// <remarks>	August295, 2022/9/5. </remarks>
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-enum SingleToken
-{
+enum SingleToken {
     kBlockStart = '{',
     kBlockEnd   = '}',
     kPoundSign  = '#',
-
     kComma      = ',',
     kSemicolon  = ';',
     kEqual      = '=',
@@ -117,12 +112,13 @@ static const std::vector<std::string> qualifiers = {
 };
 
 /// underline ('_') shouldn't be included as it can be part of an identifier
-static const std::string kTokenDelimiters     = " \t#{[(<&|*>)]}?\':\",%!=/;+*$";
+// static const std::string kTokenDelimiters = " \t#{[(<&|*>)]}?\':\",%!=/;+*$";
+static const std::string kTokenDelimiters = " \t#{[(<&|*>)]}?,%!=/;+*$";
 
 /// prefix that is used to make a fake identifier for anonymous struct/union/enum type
 static const std::string kAnonymousTypePrefix = "_ANONYMOUS_";
 
 /// name of padding field into a struct/union, for the purpose of alignment
-static const std::string kPaddingFieldName    = "_padding_field_";
+static const std::string kPaddingFieldName = "_padding_field_";
 
 #endif // _DEFINES_H_
