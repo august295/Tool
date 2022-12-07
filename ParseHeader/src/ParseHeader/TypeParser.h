@@ -21,8 +21,7 @@
 ///
 /// <remarks>	August295, 2022/9/5. </remarks>
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-class TYPEPARSER_EXPORT TypeParser
-{
+class TYPEPARSER_EXPORT TypeParser {
 public:
     TypeParser(void);
     ~TypeParser(void);
@@ -45,11 +44,11 @@ public:
     void ParseFiles();
     void ParseFile(const std::string& file);
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// <summary>	解析处理好的字符串. </summary>
-    ///
-    /// <remarks>	August295, 2022/9/5. </remarks>
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    /**
+     * @brief 解析处理好的文件字符串
+     *
+     * @param src      文件字符串
+     */
     void ParseSource(const std::string& src);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -107,8 +106,6 @@ private:
     /// <summary>	获取指定路径下所有文件. </summary>
     ///
     /// <remarks>	August295, 2022/9/5. </remarks>
-    ///
-    /// <param name="path">	文件路径. </param>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     void        FindHeaderFiles(std::string folder);
     std::string GetFile(std::string& filename) const;
@@ -128,12 +125,34 @@ private:
     void        WrapLines(std::list<std::string>& lines) const;
     std::string MergeAllLines(const std::list<std::string>& lines) const;
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// <summary>	添加功能. </summary>
-    ///		1. 获取注释
-    /// <remarks>	August295, 2022/9/20. </remarks>
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    bool ParseComment(const std::string& src, size_t& pos, std::string& m_comment) const;
+    /**
+     * @brief 解析结构体、联合体、枚举内部同行的注释
+     *
+     * @param src          文件字符串
+     * @param pos          偏移
+     * @param comment      注释
+     * @return true        成功
+     * @return false       失败
+     */
+    bool ParseComment(const std::string& src, size_t& pos, std::string& comment) const;
+
+    /**
+     * @brief 解析时跳过结构体、联合体内部函数
+     *
+     * @param src          文件字符串
+     * @param pos          偏移
+     * @return true        成功
+     * @return false       失败
+     */
+    bool ParseSkipFunction(const std::string& src, size_t& pos) const;
+
+    /**
+     * @brief 获取作用域
+     *
+     * @param pos          偏移
+     * @return std::string 作用域
+     */
+    std::string GetNamespace(size_t& pos) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// <summary>	工具函数. </summary>
@@ -149,7 +168,7 @@ private:
     bool        IsIgnorable(std::string token) const;
     TokenTypes  GetTokenType(const std::string& token) const;
     bool        IsNumericToken(const std::string& token, long& number) const;
-    size_t      GetTypeSize(const std::string& m_type) const;
+    size_t      GetTypeSize(const std::string& type) const;
     void        DumpTypeDefs() const;
 
 public:
@@ -158,6 +177,9 @@ public:
     static const size_t kWordSize_  = 4;   ///< size of a machine word on a 32-bit system
 
 public:
+    /// namespace
+    std::vector<std::tuple<std::string, size_t, size_t>> namespaces_;
+
     /// external input
     std::set<std::string> include_paths_;
 

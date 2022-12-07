@@ -55,6 +55,7 @@ enum TokenTypes {
     kUnionKeyword,
     kEnumKeyword,
     kTypedefKeyword,
+    kNamespaceKeyword,
 
     kBasicDataType,
     kAbstractType,

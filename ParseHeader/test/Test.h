@@ -1,5 +1,5 @@
-#ifndef __STRUCT_H__
-#define __STRUCT_H__
+#ifndef __TEST_H__
+#define __TEST_H__
 
 #include <string>
 
