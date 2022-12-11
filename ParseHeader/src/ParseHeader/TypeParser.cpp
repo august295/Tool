@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <iostream>
 #include <math.h>
+#include <regex>
 
 #ifdef WIN32
 #include "dirent.h" // opendir/readdir, @see http://www.softagalleria.net/download/dirent/
@@ -181,72 +182,6 @@ std::string TypeParser::Preprocess(std::ifstream& ifs) const
     return MergeAllLines(lines);
 }
 
-bool TypeParser::ParseComment(const std::string& src, size_t& pos, std::string& comment) const
-{
-    size_t      index = pos;
-    std::string token;
-    std::string line;
-
-    GetNextToken(src, index, token);
-    if (token == "/") {
-        GetRestLine(src, index, line);
-        comment = token + line;
-        if (comment[0] == '/' && comment[1] == '/') {
-            comment = comment.substr(2, comment.size() - 2);
-            comment = trim(comment);
-            pos     = index;
-            return true;
-        } else if (comment[0] == '/' && comment[1] == '*') {
-            while (true) {
-                if ('*' == comment[comment.size() - 2] && '/' == comment[comment.size() - 1]) {
-                    comment = comment.substr(2, comment.size() - 4);
-                    comment = trim(comment);
-                    pos     = index;
-                    return true;
-                }
-                GetNextToken(src, index, token);
-                GetRestLine(src, index, line);
-                comment += token + line;
-            }
-        }
-    }
-    return false;
-}
-
-bool TypeParser::ParseSkipFunction(const std::string& src, size_t& pos) const
-{
-    size_t      index = pos, num = 0;
-    std::string token;
-    std::string line;
-
-    GetNextToken(src, index, token);
-    while (true) {
-        if (kBlockStart == token.at(0)) {
-            num++;
-        } else if (kBlockEnd == token.at(0)) {
-            num--;
-        }
-        if (kBlockEnd == token.at(0) && num == 0) {
-            pos = index;
-            return true;
-        }
-        GetNextToken(src, index, token);
-    }
-    return false;
-}
-
-std::string TypeParser::GetNamespace(size_t& pos) const
-{
-    std::string space;
-    for (auto it = namespaces_.rbegin(); it != namespaces_.rend(); ++it) {
-        if (std::get<1>(*it) < pos && std::get<2>(*it) == 0) {
-            space += std::get<0>(*it);
-            space += "::";
-        }
-    }
-    return space;
-}
-
 /// Strip all comments from code lines
 ///
 /// - either line comment or comment blocks will be removed
@@ -345,7 +280,7 @@ void TypeParser::WrapLines(std::list<std::string>& lines) const
 
     while (it != lines.end()) {
         first = it;
-        line = *it;
+        line  = *it;
         assert(!line.empty());
 
         while ('\\' == line[line.length() - 1] && ++it != lines.end()) {
@@ -531,95 +466,6 @@ size_t TypeParser::GetTypeSize(const std::string& type) const
     }
 }
 
-/// Dump the extracted type definitions
-void TypeParser::DumpTypeDefs() const
-{
-    StructDeclaration var;
-
-    // dump numeric const variables or macros
-    std::cout << "\nconstant values:"
-              << "\n--------------------" << std::endl;
-    for (std::map<std::string, long>::const_iterator it = const_defs_.begin(); it != const_defs_.end(); ++it) {
-        std::cout << "\t" << it->first << "\t = " << it->second << std::endl;
-    }
-
-    // dump struct definitions
-    std::cout << "\nstruct definitions:"
-              << "\n--------------------" << std::endl;
-    for (std::map<std::string, std::list<StructDeclaration>>::const_iterator it = struct_defs_.begin();
-         it != struct_defs_.end();
-         ++it) {
-        std::cout << "struct " << it->first << ":" << std::endl;
-
-        std::list<StructDeclaration> members = it->second;
-        while (!members.empty()) {
-            var = members.front();
-            std::cout << '\t' << var.m_type;
-
-            if (var.m_is_pointer)
-                std::cout << "* ";
-
-            std::cout << "\t" << var.m_name;
-
-            if (0 < var.m_size_array)
-                std::cout << "[" << var.m_size_array << "]";
-
-            std::cout << "\t(" << var.m_size_value << ")" << std::endl;
-
-            members.pop_front();
-        }
-
-        std::string type = it->first;
-        std::cout << "\t(size = " << type_sizes_.at(type) << ")\n"
-                  << std::endl;
-    }
-
-    // dump union definitions
-    std::cout << "\nunion definitions:"
-              << "\n--------------------" << std::endl;
-    for (std::map<std::string, std::list<StructDeclaration>>::const_iterator itu = union_defs_.begin();
-         itu != union_defs_.end();
-         ++itu) {
-        std::cout << "union " << itu->first << ":" << std::endl;
-
-        std::list<StructDeclaration> members = itu->second;
-        while (!members.empty()) {
-            var = members.front();
-            std::cout << '\t' << var.m_type;
-
-            if (var.m_is_pointer)
-                std::cout << "* ";
-
-            std::cout << "\t" << var.m_name;
-
-            if (0 < var.m_size_array)
-                std::cout << "[" << var.m_size_array << "]";
-
-            std::cout << "\t(" << var.m_size_value << ")" << std::endl;
-
-            members.pop_front();
-        }
-        std::cout << "\t(size = " << type_sizes_.at(itu->first) << ")\n"
-                  << std::endl;
-    }
-
-    // dump enum definitions
-    std::cout << "\nenum definitions:"
-              << "\n--------------------" << std::endl;
-    for (auto itv = enum_defs_.begin(); itv != enum_defs_.end(); ++itv) {
-        std::cout << "enum " << itv->first << ":" << std::endl;
-
-        std::list<EnumDeclaration> members = itv->second;
-        while (!members.empty()) {
-            EnumDeclaration var = members.front();
-            std::cout << '\t' << var.m_name << "(" << var.m_value << ")" << std::endl;
-            members.pop_front();
-        }
-        std::cout << '\n'
-                  << std::endl;
-    }
-}
-
 /// Get next token - it can either be a special character, or a keyword/identifier
 ///
 /// @param[in]      src     source code
@@ -642,7 +488,8 @@ bool TypeParser::GetNextToken(std::string src, size_t& pos, std::string& token, 
     }
 
     // skip leading blanks or EOL
-    while (pos < src.length() && (isspace(src[pos]) || EOL == src[pos])) pos++;
+    while (pos < src.length() && (isspace(src[pos]) || EOL == src[pos]))
+        pos++;
 
     if (pos >= src.length()) {
         token.clear();
@@ -941,6 +788,12 @@ bool TypeParser::ParseEnum(const bool is_typedef, const std::string& src, size_t
             // break as block ends
             break;
         } else {
+            // skip useless comments
+            if (token.at(0) == '/') {
+                ParseCommentSkip(src, pos);
+                continue;
+            }
+
             // parse enum member declarations
             if (is_last_member) {
                 Error("Bad enum member declaration in last line");
@@ -1122,12 +975,7 @@ bool TypeParser::ParseStructUnion(const bool is_struct, const bool is_typedef, c
             } else {
                 // skip useless comments
                 if (token.at(0) == '/') {
-                    SkipCurrentLine(src, pos, line);
-                    continue;
-                }
-                // skip function
-                if ((token == type_name) || token == "~" + type_name) {
-                    ParseSkipFunction(src, pos);
+                    ParseCommentSkip(src, pos);
                     continue;
                 }
 
@@ -1137,6 +985,13 @@ bool TypeParser::ParseStructUnion(const bool is_struct, const bool is_typedef, c
                 }
 
                 line = token + line;
+                // skip function
+                std::regex regRaw(R"((virtual\s+)?(\w+)?(\s+)?~?(\w+(?:=|==)?)?\((.*)\)(\s+const)?(.*))");
+                if (std::regex_match(token + line, regRaw)) {
+                    ParseFunctionSkip(src, pos);
+                    continue;
+                }
+
                 if (!ParseDeclaration(line, member)) {
                     Error("Unresolved struct/union member declaration syntax");
                     return false;
@@ -1462,4 +1317,94 @@ void TypeParser::StoreStructUnionDef(const bool is_struct, const std::string& ty
     }
 
     type_sizes_[type_name] = size;
+}
+
+bool TypeParser::ParseComment(const std::string& src, size_t& pos, std::string& comment) const
+{
+    size_t      index = pos;
+    std::string token;
+    std::string line;
+
+    GetNextToken(src, index, token);
+    if (token == "/") {
+        GetRestLine(src, index, line);
+        comment = token + line;
+        if (comment[0] == '/' && comment[1] == '/') {
+            comment = comment.substr(2, comment.size() - 2);
+            comment = trim(comment);
+            pos     = index;
+            return true;
+        } else if (comment[0] == '/' && comment[1] == '*') {
+            while (true) {
+                if ('*' == comment[comment.size() - 2] && '/' == comment[comment.size() - 1]) {
+                    comment = comment.substr(2, comment.size() - 4);
+                    comment = trim(comment);
+                    pos     = index;
+                    return true;
+                }
+                GetNextToken(src, index, token);
+                GetRestLine(src, index, line);
+                comment += token + line;
+            }
+        }
+    }
+    return false;
+}
+
+bool TypeParser::ParseCommentSkip(const std::string& src, size_t& pos) const
+{
+    size_t      index = pos;
+    std::string token;
+    std::string line;
+
+    GetNextToken(src, index, token);
+    if (token == "/") {
+        GetRestLine(src, index, token);
+        pos = index;
+        return true;
+    } else if (token == "*") {
+        GetRestLine(src, index, token);
+        while (true) {
+            if (token[token.size() - 2] == '*' && token[token.size() - 1] == '/') {
+                pos = index;
+                return true;
+            }
+            GetNextLine(src, index, token);
+        }
+    }
+    return false;
+}
+
+bool TypeParser::ParseFunctionSkip(const std::string& src, size_t& pos) const
+{
+    size_t      index = pos, num = 0;
+    std::string token;
+    std::string line;
+
+    GetNextToken(src, index, token);
+    while (true) {
+        if (kBlockStart == token.at(0)) {
+            num++;
+        } else if (kBlockEnd == token.at(0)) {
+            num--;
+        }
+        if (kBlockEnd == token.at(0) && num == 0) {
+            pos = index;
+            return true;
+        }
+        GetNextToken(src, index, token);
+    }
+    return false;
+}
+
+std::string TypeParser::GetNamespace(size_t& pos) const
+{
+    std::string space;
+    for (auto it = namespaces_.rbegin(); it != namespaces_.rend(); ++it) {
+        if (std::get<1>(*it) < pos && std::get<2>(*it) == 0) {
+            space += std::get<0>(*it);
+            space += "::";
+        }
+    }
+    return space;
 }

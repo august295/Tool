@@ -44,6 +44,7 @@ public:
     void ParseFiles();
     void ParseFile(const std::string& file);
 
+private:
     /**
      * @brief 解析处理好的文件字符串
      *
@@ -88,20 +89,14 @@ public:
     ///		1. 构造默认变量信息
     ///		2. 使用填充字段填充结构以进行内存对齐
     ///		3. 计算联合体大小
+    ///     4. 存储结构体或联合体的定义和大小
     /// <remarks>	August295, 2022/9/5. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     StructDeclaration MakePadField(const size_t size) const;
     size_t            PadStructMembers(std::list<StructDeclaration>& members);
     size_t            CalcUnionSize(const std::list<StructDeclaration>& members) const;
+    void              StoreStructUnionDef(const bool is_struct, const std::string& type_name, std::list<StructDeclaration>& members);
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// <summary>	存储结构体或联合体的定义和大小. </summary>
-    ///
-    /// <remarks>	August295, 2022/9/5. </remarks>
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    void StoreStructUnionDef(const bool is_struct, const std::string& type_name, std::list<StructDeclaration>& members);
-
-private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// <summary>	获取指定路径下所有文件. </summary>
     ///
@@ -125,8 +120,23 @@ private:
     void        WrapLines(std::list<std::string>& lines) const;
     std::string MergeAllLines(const std::list<std::string>& lines) const;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// <summary>	工具函数. </summary>
+    ///		1. 获取从行的指定位置开始的下一个标记，如果令牌不在行尾，pos将移动到令牌后面
+    ///		2. 返回true表示它是一个空标记，或者是一个可以忽略的限定符
+    ///		3. 从已知关键字/限定符或基本/使用定义类型查询标记类型
+    ///		4. 检查令牌是数字还是可以转换为数字
+    ///		5. 获取类型大小
+    /// <remarks>	August295, 2022/9/5. </remarks>
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    std::string GetNextToken(const std::string line, size_t& i) const; // TODO: std::string ignore=" \t"
+    bool        IsIgnorable(std::string token) const;
+    TokenTypes  GetTokenType(const std::string& token) const;
+    bool        IsNumericToken(const std::string& token, long& number) const;
+    size_t      GetTypeSize(const std::string& type) const;
+
     /**
-     * @brief 解析结构体、联合体、枚举内部同行的注释
+     * @brief 解析结构体、联合体、枚举内部变量后面第一个注释
      *
      * @param src          文件字符串
      * @param pos          偏移
@@ -137,6 +147,16 @@ private:
     bool ParseComment(const std::string& src, size_t& pos, std::string& comment) const;
 
     /**
+     * @brief 解析时跳过结构体、联合体、枚举内部的注释
+     *
+     * @param src          文件字符串
+     * @param pos          偏移
+     * @return true        成功
+     * @return false       失败
+     */
+    bool ParseCommentSkip(const std::string& src, size_t& pos) const;
+
+    /**
      * @brief 解析时跳过结构体、联合体内部函数
      *
      * @param src          文件字符串
@@ -144,7 +164,7 @@ private:
      * @return true        成功
      * @return false       失败
      */
-    bool ParseSkipFunction(const std::string& src, size_t& pos) const;
+    bool ParseFunctionSkip(const std::string& src, size_t& pos) const;
 
     /**
      * @brief 获取作用域
@@ -153,23 +173,6 @@ private:
      * @return std::string 作用域
      */
     std::string GetNamespace(size_t& pos) const;
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// <summary>	工具函数. </summary>
-    ///		1. 获取从行的指定位置开始的下一个标记，如果令牌不在行尾，pos将移动到令牌后面
-    ///		2. 返回true表示它是一个空标记，或者是一个可以忽略的限定符
-    ///		3. 从已知关键字/限定符或基本/使用定义类型查询标记类型
-    ///		4. 检查令牌是数字还是可以转换为数字
-    ///		5. 获取类型大小
-    ///		6. 转储提取的类型定义
-    /// <remarks>	August295, 2022/9/5. </remarks>
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    std::string GetNextToken(const std::string line, size_t& i) const; // TODO: std::string ignore=" \t"
-    bool        IsIgnorable(std::string token) const;
-    TokenTypes  GetTokenType(const std::string& token) const;
-    bool        IsNumericToken(const std::string& token, long& number) const;
-    size_t      GetTypeSize(const std::string& type) const;
-    void        DumpTypeDefs() const;
 
 public:
     static const char   EOL         = '$'; ///< end of line, used to delimit the source lines within a std::string
