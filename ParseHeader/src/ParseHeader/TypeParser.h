@@ -181,7 +181,14 @@ public:
 
 public:
     /// namespace
+    /// std::get<0> - the namespace name
+    /// std::get<1> - the namespace start pos
+    /// std::get<2> - the namespace end pos
     std::vector<std::tuple<std::string, size_t, size_t>> namespaces_;
+
+    /// comment
+    std::string                        comment_;
+    std::map<std::string, std::string> comments_;
 
     /// external input
     std::set<std::string> include_paths_;

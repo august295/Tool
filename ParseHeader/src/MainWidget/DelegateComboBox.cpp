@@ -24,37 +24,36 @@ QWidget* DelegateComboBox::createEditor(QWidget* parent, const QStyleOptionViewI
     completer->setModel(lisModel);
     completer->setCaseSensitivity(Qt::CaseInsensitive); // 大小写不敏感
     completer->setFilterMode(Qt::MatchRecursive);       // 匹配规则：包含则匹配
-    comboBox->addItems(_StructTypeList);
-    comboBox->setEditable(true);       // 设置可编辑
-    comboBox->setCompleter(completer); // 模糊匹配
-    comboBox->setLineEdit(lineEdit);   // 与编辑m_edit绑定
+    comboBox->addItems(_StructTypeList);                // 添加列表
+    comboBox->setEditable(true);                        // 设置可编辑
+    comboBox->setCompleter(completer);                  // 模糊匹配
+    comboBox->setLineEdit(lineEdit);                    // 与编辑绑定
 
     return comboBox;
 }
 
 void DelegateComboBox::setEditorData(QWidget* editor, const QModelIndex& index) const
 {
-    //获取单元格内容
+    // 获取单元格内容
     QString    str          = index.data().toString();
     QComboBox* box          = static_cast<QComboBox*>(editor);
     int        currentIndex = box->findText(str);
-    if (currentIndex >= 0)
-    {
+    if (currentIndex >= 0) {
         box->setCurrentIndex(currentIndex);
     }
 }
 
 void DelegateComboBox::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
 {
-    //获取编辑控件的内容
+    // 获取编辑控件的内容
     QString str = static_cast<QComboBox*>(editor)->currentText();
-    //设置模型数据
+    // 设置模型数据
     model->setData(index, str);
 }
 
-void DelegateComboBox::updateEditorGeometry(QWidget* editor, const QStyleOption& option, const QModelIndex& index)
+void DelegateComboBox::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     Q_UNUSED(index);
-    //更新控件位置大小
+    // 更新控件位置大小
     editor->setGeometry(option.rect);
 }

@@ -649,9 +649,13 @@ void TypeParser::ParseSource(const std::string& src)
                 break;
             case kSemicolon:
                 break;
+            case kSlash:
+                --pos;
+                ParseComment(src, pos, comment_);
+                break;
             default:
                 SkipCurrentLine(src, pos, line);
-                // Debug("Character '" + token + "' unexpected, ignore the line");
+                Debug("Character '" + token + "' unexpected, ignore the line");
             }
         } else {
             type = GetTokenType(token);
@@ -744,6 +748,8 @@ bool TypeParser::ParseEnum(const bool is_typedef, const std::string& src, size_t
                 type_alias              = space + token;
                 enum_defs_[type_alias]  = members;
                 type_sizes_[type_alias] = sizeof(int);
+                type_name               = type_alias;
+
                 //                if (!type_name.empty() && type_alias.compare(type_name) != 0) {
                 //                    enum_defs_[type_name]  = members; // type name
                 //                    type_sizes_[type_name] = sizeof(int);
@@ -784,6 +790,10 @@ bool TypeParser::ParseEnum(const bool is_typedef, const std::string& src, size_t
                     }
                 }
             }
+
+            // get comment
+            comments_[type_name] = comment_;
+            comment_.clear();
 
             // break as block ends
             break;
@@ -903,6 +913,7 @@ bool TypeParser::ParseStructUnion(const bool is_struct, const bool is_typedef, c
                 is_decl    = false;
                 type_alias = space + token;
                 StoreStructUnionDef(is_struct, type_alias, members);
+                type_name = type_alias;
 
                 //                // when type_name not empty and not the same as type alias, store a copy in case it's used elsewhere
                 //                if (!type_name.empty() && type_alias.compare(type_name) != 0) {
@@ -945,6 +956,10 @@ bool TypeParser::ParseStructUnion(const bool is_struct, const bool is_typedef, c
                     }
                 }
             }
+
+            // get comment
+            comments_[type_name] = comment_;
+            comment_.clear();
 
             // break as block ends
             break;

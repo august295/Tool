@@ -12,8 +12,20 @@
 #include "ParseHeaderWidget.h"
 #include "StructOperateWidget.h"
 
-struct ParseHeaderWidget::ParseHeaderWidgetPrivate
-{
+struct ParseHeaderWidget::ParseHeaderWidgetPrivate {
+    std::string          m_CurrFile;            // 当前操作文件
+    StructOperateWidget* m_StructOperateWidget; // 结构体操作界面
+
+    QMenu*   m_TreeRightMenu;   // 树右键菜单
+    QAction* m_ActionAddStruct; // 结构体
+    QAction* m_ActionAddEnum;   // 枚举
+    QAction* m_ActionAddConst;  // 常量
+
+    QTableWidget* m_TableWidgetStruct;  // 结构体表格
+    QTableWidget* m_TableWidgetEnum;    // 枚举表格
+    QTableWidget* m_TableWidgetConst;   // 常量表格
+    QTableWidget* m_TableWidgetComment; // 注释表格
+
     ParseHeaderWidgetPrivate()
     {
         m_StructOperateWidget = nullptr;
@@ -24,6 +36,7 @@ struct ParseHeaderWidget::ParseHeaderWidgetPrivate
         m_TableWidgetStruct   = nullptr;
         m_TableWidgetEnum     = nullptr;
         m_TableWidgetConst    = nullptr;
+        m_TableWidgetComment  = nullptr;
     }
     ~ParseHeaderWidgetPrivate()
     {
@@ -35,19 +48,8 @@ struct ParseHeaderWidget::ParseHeaderWidgetPrivate
         delete m_TableWidgetStruct;
         delete m_TableWidgetEnum;
         delete m_TableWidgetConst;
+        delete m_TableWidgetComment;
     }
-
-    std::string          m_CurrFile;            // 当前操作文件
-    StructOperateWidget* m_StructOperateWidget; // 结构体操作界面
-
-    QMenu*   m_TreeRightMenu;   // 树右键菜单
-    QAction* m_ActionAddStruct; // 结构体
-    QAction* m_ActionAddEnum;   // 枚举
-    QAction* m_ActionAddConst;  // 常量
-
-    QTableWidget* m_TableWidgetStruct; // 结构体界面
-    QTableWidget* m_TableWidgetEnum;   // 枚举界面
-    QTableWidget* m_TableWidgetConst;  // 常量界面
 };
 
 ParseHeaderWidget::ParseHeaderWidget(QWidget* parent)
@@ -59,7 +61,7 @@ ParseHeaderWidget::ParseHeaderWidget(QWidget* parent)
     setMinimumSize(1200, 800);
 
     // 优先解析文件
-    std::set<std::string> includePaths({"../../../test"});
+    std::set<std::string> includePaths({ "../../../test" });
     DataManager::GetInstance()->ParseFiles(includePaths);
 
     // 初始化界面
@@ -68,8 +70,7 @@ ParseHeaderWidget::ParseHeaderWidget(QWidget* parent)
 
 ParseHeaderWidget::~ParseHeaderWidget()
 {
-    if (m_p)
-    {
+    if (m_p) {
         delete m_p;
         m_p = nullptr;
     }
@@ -106,7 +107,7 @@ void ParseHeaderWidget::InitTreeWidget()
 void ParseHeaderWidget::InitTableWidget()
 {
     m_p->m_TableWidgetStruct = new QTableWidget;
-    QStringList headerStruct = {tr("成员属性"), tr("是否指针"), tr("成员名称"), tr("备注")};
+    QStringList headerStruct = { tr("成员属性"), tr("是否指针"), tr("成员名称"), tr("备注") };
     m_p->m_TableWidgetStruct->setColumnCount(headerStruct.size());
     m_p->m_TableWidgetStruct->setHorizontalHeaderLabels(headerStruct);
     m_p->m_TableWidgetStruct->horizontalHeader()->setStyleSheet("QHeaderView::section{background:gray;}");
@@ -117,7 +118,7 @@ void ParseHeaderWidget::InitTableWidget()
     m_p->m_TableWidgetStruct->setPalette(QPalette(Qt::gray));                     // 设置隔行变色的颜色
 
     m_p->m_TableWidgetEnum = new QTableWidget;
-    QStringList headerEnum = {tr("成员名称"), tr("成员数值"), tr("备注")};
+    QStringList headerEnum = { tr("成员名称"), tr("成员数值"), tr("备注") };
     m_p->m_TableWidgetEnum->setColumnCount(headerEnum.size());
     m_p->m_TableWidgetEnum->setHorizontalHeaderLabels(headerEnum);
     m_p->m_TableWidgetEnum->horizontalHeader()->setStyleSheet("QHeaderView::section{background:gray;}");
@@ -128,7 +129,7 @@ void ParseHeaderWidget::InitTableWidget()
     m_p->m_TableWidgetEnum->setPalette(QPalette(Qt::gray));                     // 设置隔行变色的颜色
 
     m_p->m_TableWidgetConst = new QTableWidget;
-    QStringList headerConst = {tr("成员名称"), tr("成员数值"), tr("备注")};
+    QStringList headerConst = { tr("成员名称"), tr("成员数值"), tr("备注") };
     m_p->m_TableWidgetConst->setColumnCount(headerConst.size());
     m_p->m_TableWidgetConst->setHorizontalHeaderLabels(headerConst);
     m_p->m_TableWidgetConst->horizontalHeader()->setStyleSheet("QHeaderView::section{background:gray;}");
@@ -138,14 +139,24 @@ void ParseHeaderWidget::InitTableWidget()
     m_p->m_TableWidgetConst->setAlternatingRowColors(true);                      // 隔行变色
     m_p->m_TableWidgetConst->setPalette(QPalette(Qt::gray));                     // 设置隔行变色的颜色
 
+    m_p->m_TableWidgetComment = new QTableWidget;
+    QStringList headerComment = { tr("注释") };
+    m_p->m_TableWidgetComment->setColumnCount(1);
+    m_p->m_TableWidgetComment->setRowCount(1);
+    m_p->m_TableWidgetComment->setVerticalHeaderLabels(headerComment);
+    m_p->m_TableWidgetComment->horizontalHeader()->hide();
+    m_p->m_TableWidgetComment->horizontalHeader()->setStretchLastSection(true);
+
     QVBoxLayout* layout = new QVBoxLayout;
-    layout->addWidget(m_p->m_TableWidgetStruct);
-    layout->addWidget(m_p->m_TableWidgetEnum);
-    layout->addWidget(m_p->m_TableWidgetConst);
+    layout->addWidget(m_p->m_TableWidgetComment, 1);
+    layout->addWidget(m_p->m_TableWidgetStruct, 9);
+    layout->addWidget(m_p->m_TableWidgetEnum, 9);
+    layout->addWidget(m_p->m_TableWidgetConst, 9);
     ui.groupBox_Member->setLayout(layout);
     m_p->m_TableWidgetStruct->close();
     m_p->m_TableWidgetEnum->close();
     m_p->m_TableWidgetConst->close();
+    m_p->m_TableWidgetComment->close();
 }
 
 void ParseHeaderWidget::ShowTreeWidget(const std::string& selectStr /*= ""*/)
@@ -156,8 +167,7 @@ void ParseHeaderWidget::ShowTreeWidget(const std::string& selectStr /*= ""*/)
 
     // 显示到界面
     auto typeParserMap = DataManager::GetInstance()->GetTypeParserMap();
-    for (auto parser : typeParserMap)
-    {
+    for (auto parser : typeParserMap) {
         std::string      filename = parser.first;
         QTreeWidgetItem* item     = new QTreeWidgetItem(ROOT);
         item->setText(0, QString::fromStdString(filename.substr(filename.find_last_of('/') + 1)));
@@ -166,15 +176,12 @@ void ParseHeaderWidget::ShowTreeWidget(const std::string& selectStr /*= ""*/)
 
         // 结构体
         auto structDefs = parser.second.struct_defs_;
-        if (structDefs.size() > 0)
-        {
+        if (structDefs.size() > 0) {
             QTreeWidgetItem* itemStruct = new QTreeWidgetItem(NODE_STRUCT);
             itemStruct->setText(0, QString::fromStdString("Struct"));
             item->addChild(itemStruct);
-            for (auto iter : structDefs)
-            {
-                if (iter.first.find(selectStr) != std::string::npos)
-                {
+            for (auto iter : structDefs) {
+                if (iter.first.find(selectStr) != std::string::npos) {
                     QTreeWidgetItem* itemStructChild = new QTreeWidgetItem(LEAF_STRUCT);
                     itemStructChild->setText(0, QString::fromStdString(iter.first));
                     itemStructChild->setData(0, Qt::UserRole, QString::fromStdString(filename));
@@ -185,15 +192,12 @@ void ParseHeaderWidget::ShowTreeWidget(const std::string& selectStr /*= ""*/)
 
         // 枚举
         auto enumDefs = parser.second.enum_defs_;
-        if (enumDefs.size() > 0)
-        {
+        if (enumDefs.size() > 0) {
             QTreeWidgetItem* itemEnum = new QTreeWidgetItem(NODE_ENUM);
             itemEnum->setText(0, QString::fromStdString("Enum"));
             item->addChild(itemEnum);
-            for (auto iter : enumDefs)
-            {
-                if (iter.first.find(selectStr) != std::string::npos)
-                {
+            for (auto iter : enumDefs) {
+                if (iter.first.find(selectStr) != std::string::npos) {
                     QTreeWidgetItem* itemEnumChild = new QTreeWidgetItem(LEAF_ENUM);
                     itemEnumChild->setText(0, QString::fromStdString(iter.first));
                     itemEnumChild->setData(0, Qt::UserRole, QString::fromStdString(filename));
@@ -217,10 +221,9 @@ void ParseHeaderWidget::ShowTableStruct(const std::string& fileName, const std::
     QTableWidget* tableWidget   = m_p->m_TableWidgetStruct;
 
     tableWidget->setRowCount(0);
-    for (auto var : parser.struct_defs_[typeName])
-    {
-        if (kPaddingFieldName != var.m_name)
-        {
+    m_p->m_TableWidgetComment->setItem(0, 0, new QTableWidgetItem(QString::fromStdString(parser.comments_[typeName])));
+    for (auto var : parser.struct_defs_[typeName]) {
+        if (kPaddingFieldName != var.m_name) {
             int rowCount = tableWidget->rowCount();
             tableWidget->insertRow(rowCount);
             tableWidget->setItem(rowCount, 0, new QTableWidgetItem(QString::fromStdString(var.m_type)));
@@ -245,8 +248,8 @@ void ParseHeaderWidget::ShowTableEnum(const std::string& fileName, const std::st
     QTableWidget* tableWidget   = m_p->m_TableWidgetEnum;
 
     tableWidget->setRowCount(0);
-    for (auto var : parser.enum_defs_[typeName])
-    {
+    m_p->m_TableWidgetComment->setItem(0, 0, new QTableWidgetItem(QString::fromStdString(parser.comments_[typeName])));
+    for (auto var : parser.enum_defs_[typeName]) {
         int rowCount = tableWidget->rowCount();
         tableWidget->insertRow(rowCount);
         tableWidget->setItem(rowCount, 0, new QTableWidgetItem(QString::fromStdString(var.m_name)));
@@ -273,28 +276,22 @@ void ParseHeaderWidget::SlotDataTypeSelect()
 void ParseHeaderWidget::SlotDataTypeSave()
 {
     auto fileMap = DataManager::GetInstance()->GetFileMap();
-    for (auto& file : fileMap)
-    {
+    for (auto& file : fileMap) {
         std::string                  filename  = file.first;
         std::map<std::string, bool>& structVec = file.second;
-        if (structVec.empty())
-        {
+        if (structVec.empty()) {
             continue;
         }
         auto       typeParserMap = DataManager::GetInstance()->GetTypeParserMap();
         TypeParser parser        = typeParserMap[filename];
         auto       fileLineVec   = FileManage::GetInstance()->GetFileContent(filename);
-        for (size_t i = 0; i < fileLineVec.size(); i++)
-        {
-            for (auto& stru : structVec)
-            {
-                if (fileLineVec[i].find(stru.first) != std::string::npos && false == stru.second)
-                {
+        for (size_t i = 0; i < fileLineVec.size(); i++) {
+            for (auto& stru : structVec) {
+                if (fileLineVec[i].find(stru.first) != std::string::npos && false == stru.second) {
                     std::vector<std::string> lineVec;
                     this->PackageStruct(stru.first, parser.struct_defs_[stru.first], lineVec);
                     size_t j = i;
-                    while (fileLineVec[j].find("}") == std::string::npos)
-                    {
+                    while (fileLineVec[j].find("}") == std::string::npos) {
                         j++;
                     }
                     fileLineVec.erase(fileLineVec.begin() + i, fileLineVec.begin() + j);
@@ -304,14 +301,10 @@ void ParseHeaderWidget::SlotDataTypeSave()
                 }
             }
         }
-        for (size_t i = fileLineVec.size() - 1; i > fileLineVec.size() - 10; i--)
-        {
-            if (fileLineVec[i].find("#endif") != std::string::npos)
-            {
-                for (auto& stru : structVec)
-                {
-                    if (false == stru.second)
-                    {
+        for (size_t i = fileLineVec.size() - 1; i > fileLineVec.size() - 10; i--) {
+            if (fileLineVec[i].find("#endif") != std::string::npos) {
+                for (auto& stru : structVec) {
+                    if (false == stru.second) {
                         std::vector<std::string> lineVec;
                         this->PackageStruct(stru.first, parser.struct_defs_[stru.first], lineVec);
                         fileLineVec.insert(fileLineVec.begin() + i, lineVec.begin(), lineVec.end());
@@ -329,8 +322,7 @@ void ParseHeaderWidget::SlotDataTypeShow(QTreeWidgetItem* item, int column)
 {
     std::string fileName = item->data(column, Qt::UserRole).toByteArray().data();
     std::string typeName = item->text(column).toStdString();
-    switch (item->type())
-    {
+    switch (item->type()) {
     case LEAF_STRUCT:
         ShowTableStruct(fileName, typeName);
         break;
@@ -342,16 +334,16 @@ void ParseHeaderWidget::SlotDataTypeShow(QTreeWidgetItem* item, int column)
     default:
         break;
     }
+    m_p->m_TableWidgetComment->show();
+    m_p->m_TableWidgetComment->setRowHeight(0, m_p->m_TableWidgetComment->height());
 }
 
 void ParseHeaderWidget::SlotTreeRightMenu(const QPoint& pos)
 {
-    QTreeWidgetItem* item = ui.treeWidget->itemAt(pos); //关键
-    if (item)
-    {
+    QTreeWidgetItem* item = ui.treeWidget->itemAt(pos); // 关键
+    if (item) {
         m_p->m_TreeRightMenu->clear();
-        switch (item->type())
-        {
+        switch (item->type()) {
         case ROOT:
             m_p->m_TreeRightMenu->addAction(m_p->m_ActionAddStruct);
             m_p->m_TreeRightMenu->addAction(m_p->m_ActionAddEnum);
@@ -370,7 +362,7 @@ void ParseHeaderWidget::SlotTreeRightMenu(const QPoint& pos)
             break;
         }
     }
-    //移动菜单出现在鼠标点击的位置
+    // 移动菜单出现在鼠标点击的位置
     m_p->m_TreeRightMenu->move(ui.treeWidget->cursor().pos());
     m_p->m_TreeRightMenu->show();
 }
@@ -380,15 +372,13 @@ void ParseHeaderWidget::SlotAddStruct()
     QTreeWidgetItem* item = ui.treeWidget->currentItem();
     m_p->m_CurrFile       = item->data(0, Qt::UserRole).toByteArray().data();
 
-    if (nullptr == m_p->m_StructOperateWidget)
-    {
+    if (nullptr == m_p->m_StructOperateWidget) {
         m_p->m_StructOperateWidget = new StructOperateWidget;
         connect(m_p->m_StructOperateWidget->ui.pushButton_Finish, &QPushButton::clicked, this, &ParseHeaderWidget::SlotAddStructFinish);
     }
     std::list<std::string> typeList = DataManager::GetInstance()->GetTypeList();
     QStringList            typeQList;
-    for (auto type : typeList)
-    {
+    for (auto type : typeList) {
         typeQList << QString::fromStdString(type);
     }
     m_p->m_StructOperateWidget->UpdateStructTypeList(typeQList);
@@ -401,8 +391,7 @@ void ParseHeaderWidget::SlotAddStructFinish()
     // 获取界面数据并保存
     std::string                  structName = m_p->m_StructOperateWidget->ui.lineEdit_Name->text().toStdString();
     std::list<StructDeclaration> varList;
-    for (int i = 0; i < m_p->m_StructOperateWidget->ui.tableWidget->rowCount(); i++)
-    {
+    for (int i = 0; i < m_p->m_StructOperateWidget->ui.tableWidget->rowCount(); i++) {
         QTableWidget*     tableWidget = m_p->m_StructOperateWidget->ui.tableWidget;
         StructDeclaration var;
         var.m_type       = tableWidget->item(i, 0)->text().toLocal8Bit().data();
@@ -413,8 +402,7 @@ void ParseHeaderWidget::SlotAddStructFinish()
     }
     auto typeParserMap = DataManager::GetInstance()->GetTypeParserMap();
     auto iter          = typeParserMap.find(m_p->m_CurrFile);
-    if (iter != typeParserMap.end())
-    {
+    if (iter != typeParserMap.end()) {
         iter->second.struct_defs_.emplace(structName, varList);
     }
 
@@ -433,11 +421,9 @@ void ParseHeaderWidget::PackageStruct(const std::string& structName, const std::
     temp.clear();
 
     lineVec.push_back("{");
-    for (auto var : varList)
-    {
+    for (auto var : varList) {
         temp += "\t" + var.m_type;
-        if (var.m_is_pointer)
-        {
+        if (var.m_is_pointer) {
             temp += "*";
         }
         temp += " " + var.m_name;

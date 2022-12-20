@@ -7,8 +7,7 @@
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QStyledItemDelegate>
 
-class DelegateComboBox : public QStyledItemDelegate
-{
+class DelegateComboBox : public QStyledItemDelegate {
     Q_OBJECT
 
 public:
@@ -22,7 +21,7 @@ public:
     // 设置模型数据
     void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
     // 设置控件位置
-    void updateEditorGeometry(QWidget* editor, const QStyleOption& option, const QModelIndex& index);
+    void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
 private:
     QStringList _StructTypeList; // 下拉框内容

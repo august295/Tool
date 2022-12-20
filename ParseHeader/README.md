@@ -1,14 +1,28 @@
 # 头文件解析
 
+- [1. 项目介绍](#1-项目介绍)
+  - [1.1. 基础](#11-基础)
+  - [1.2. 功能](#12-功能)
+- [2. 项目使用](#2-项目使用)
+  - [2.1. 项目环境](#21-项目环境)
+  - [2.2. 项目生成](#22-项目生成)
+  - [2.3. 项目文件](#23-项目文件)
+- [3. 修改记录](#3-修改记录)
+  - [3.1. 20221220](#31-20221220)
+  - [3.2. 20221211](#32-20221211)
+  - [3.3. 20221204](#33-20221204)
+- [4. 参考](#4-参考)
 
 
-## 1 项目介绍
 
-### 1.0 基础
+
+## 1. 项目介绍
+
+### 1.1. 基础
 
 该项目是基于 [fanghm/c-header-parser](https://github.com/fanghm/c-header-parser) 实现，核心已实现解析 `C/C++` 头文件，添加 `QT` 界面。
 
-### 1.1 功能
+### 1.2. 功能
 
 该项目用于解析 `C/C++` 头文件并展示，允许添加新结构体，包括
 
@@ -19,89 +33,45 @@
 
 
 
-## 2 项目使用
+## 2. 项目使用
 
-### 2.0 项目环境
+### 2.1. 项目环境
 
 - `Visual Studio 2017` 或者 `Qt Creator4` （至少支持 C++11）
 - `Cmake3.10.0`（及以上）
 
-### 2.1 项目结构
-
-```cpp
-ParseHeader
-|   .clang-format
-|   .gitignore
-|   cmake-vs2017.bat
-|   CMakeLists.txt
-|   module.cmake
-|   module_qt.cmake
-|   README.md
-|
-+---src
-|   |   CMakeLists.txt
-|   |
-|   +---DataManager
-|   |       CMakeLists.txt
-|   |       DataManager.cpp
-|   |       DataManager.h
-|   |
-|   +---MainWidget
-|   |       CMakeLists.txt
-|   |       DelegateComboBox.cpp
-|   |       DelegateComboBox.h
-|   |       FileManage.cpp
-|   |       FileManage.h
-|   |       main.cpp
-|   |       ParseHeaderWidget.cpp
-|   |       ParseHeaderWidget.h
-|   |       ParseHeaderWidget.ui
-|   |       StructOperateWidget.cpp
-|   |       StructOperateWidget.h
-|   |       StructOperateWidget.ui
-|   |
-|   \---ParseHeader
-|           CMakeLists.txt
-|           defines.h
-|           dirent.h
-|           TypeParser.cpp
-|           TypeParser.h
-|           utility.h
-|
-\---test
-    |   Test.h
-    |
-    \---Employee
-            Employee.h
-```
-
-### 2.2 项目生成
+### 2.2. 项目生成
 
 其中源代码在 `src` 中。
 
 1. 使用 `Qt Creator4` 导入 `src/CMakeLists.txt`
 2. 采用 `cmake-vs2017.bat` 生成项目，或者使用 `cmake-gui` 图形界面生成项目，再用 `Visual Studio 2017` 打开
 
-### 2.3 项目文件
+### 2.3. 项目文件
 
-| 文件名              | 作用                                               |
-| ------------------- | -------------------------------------------------- |
-| dirent              | 三方库源代码文件，解析文件路径并                   |
-| utility             | 通用函数文件，包括编码转换、转换大小写、去除空格等 |
-| defines             | 定义文件，包括结构体解析结构体、数据标记、符号标记 |
-| TypeParser          | 解析头文件核心文件                                 |
-|                     |                                                    |
-| ParseHeaderWidget   | 主界面文件                                         |
-| StructOperateWidget | 添加结构体界面文件                                 |
-| DelegateComboBox    | 插入表格的下拉框代理文件                           |
-| FileManage          | 文件管理，获取文件内容和保存修改文件               |
-
-每个文件中都有详细的注释，以供使用和修改。
-
-- 读取的文件路径是 `test` 下的头文件
+- `ParseHeader` : 核心功能，解析头文件
+- `DataManager` : 数据管理
+- `MainWidget` : 界面操作
 
 
 
-## 参考
+## 3. 修改记录
+
+### 3.1. 20221220
+
+- 获取结构体或枚举头部注释
+
+### 3.2. 20221211
+
+- 过滤未关联的注释
+- 添加正则表达式过滤结构体内部函数
+
+### 3.3. 20221204
+
+- 添加作用域显示
+
+
+
+## 4. 参考
 
 [1] [fanghm/c-header-parser](https://github.com/fanghm/c-header-parser)
