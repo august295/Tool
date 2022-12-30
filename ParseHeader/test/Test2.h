@@ -1,12 +1,17 @@
 #ifndef __TEST2_H__
 #define __TEST2_H__
 
+#include <string>
+
+using namespace std;
+
 namespace AAA {
 namespace BBB {
-struct TestStruct {
-    int  a; // a
-    int  b; // b
-    long c; // c
+typedef struct TestStruct {
+    int    a; // a
+    int    b; // b
+    long   c; // c
+    string d; // d
 
     // 构造函数
     TestStruct() {}
@@ -16,9 +21,10 @@ struct TestStruct {
         a = t.a;
         b = t.b;
         c = t.c;
+        d = t.d;
         return *this;
     }
-};
+} TestStruct1, TestStruct2;
 
 // 枚举
 enum TestEnum {

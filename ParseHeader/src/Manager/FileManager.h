@@ -1,12 +1,15 @@
-#pragma once
+#ifndef __FileManager_H__
+#define __FileManager_H__
 
 #include <string>
 #include <vector>
 
-class FileManage
+#include "GlobalManager.h"
+
+class MANAGER_EXPORT FileManager
 {
 public:
-    static FileManage* GetInstance();
+    static FileManager* GetInstance();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// <summary>	获取文件内容. </summary>
@@ -28,6 +31,8 @@ public:
     void SaveFile(const std::string& file, const std::vector<std::string>& fileLineVec);
 
 private:
-    FileManage();
-    ~FileManage();
+    FileManager();
+    ~FileManager();
 };
+
+#endif

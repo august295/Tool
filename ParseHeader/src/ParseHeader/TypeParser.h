@@ -181,12 +181,14 @@ public:
 
 public:
     /// namespace
-    /// std::get<0> - the namespace name
-    /// std::get<1> - the namespace start pos
-    /// std::get<2> - the namespace end pos
+    /// get<0>  - the namespace name
+    /// get<1>  - the namespace start index
+    /// get<2>  - the namespace end index
     std::vector<std::tuple<std::string, size_t, size_t>> namespaces_;
 
     /// comment
+    /// key     - the type name
+    /// value   - the type comment
     std::string                        comment_;
     std::map<std::string, std::string> comments_;
 
@@ -211,15 +213,17 @@ public:
     /// for below 3 maps:
     /// key     - type name
     /// value   - type members
-
     /// struct definitons
     std::map<std::string, std::list<StructDeclaration>> struct_defs_;
-
     /// union definitions
     std::map<std::string, std::list<StructDeclaration>> union_defs_;
-
     /// enum definitions
     std::map<std::string, std::list<EnumDeclaration>> enum_defs_;
+
+    /// Parsing result - the typedef aliases
+    /// key     - the type name
+    /// value   - the type alias
+    std::multimap<std::string, std::string> struct_aliases_;
 
     /// constants and macros that have integer values
     /// key     - constant/macro name

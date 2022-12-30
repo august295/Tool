@@ -29,12 +29,15 @@ void TypeParser::Initialize()
 {
     basic_types_ = std::set<std::string>(data_types.begin(), data_types.end());
     qualifiers_  = std::set<std::string>(qualifiers.begin(), qualifiers.end());
+
     // keywords that we care
     keywords_["struct"]    = kStructKeyword;
     keywords_["union"]     = kUnionKeyword;
     keywords_["enum"]      = kEnumKeyword;
     keywords_["typedef"]   = kTypedefKeyword;
     keywords_["namespace"] = kNamespaceKeyword;
+    keywords_["using"]     = kUsingKeyword;
+
     // sizes of basic data types on 32-bit system, in bytes
     for (std::set<std::string>::const_iterator it = basic_types_.begin(); it != basic_types_.end(); ++it) {
         type_sizes_[*it] = kWordSize_;
@@ -690,6 +693,9 @@ void TypeParser::ParseSource(const std::string& src)
                 GetNextToken(src, pos, token);
                 namespaces_.push_back(std::make_tuple(token, pos, 0));
                 break;
+            case kUsingKeyword:
+                SkipCurrentLine(src, pos, line);
+                break;
             default:
                 break;
             }
@@ -908,22 +914,28 @@ bool TypeParser::ParseStructUnion(const bool is_struct, const bool is_typedef, c
             std::string space = GetNamespace(pos);
             type_name         = space + type_name;
             if (is_typedef) {
-                // format 1
-                assert(GetNextToken(src, pos, next_token) && kSemicolon == next_token.at(0));
-                is_decl    = false;
-                type_alias = space + token;
-                StoreStructUnionDef(is_struct, type_alias, members);
-                type_name = type_alias;
-
-                //                // when type_name not empty and not the same as type alias, store a copy in case it's used elsewhere
-                //                if (!type_name.empty() && type_alias.compare(type_name) != 0) {
-                //                    if (is_struct) {
-                //                        struct_defs_[type_name] = members;
-                //                    } else {
-                //                        union_defs_[type_name] = members;
-                //                    }
-                //                    type_sizes_[type_name] = type_sizes_[type_alias];
-                //                }
+                // format 1     get all typedef aliases
+                std::vector<std::string> aliasVec;
+                aliasVec.push_back(token);
+                while (GetNextToken(src, pos, next_token)) {
+                    if (kSemicolon == next_token.at(0)) {
+                        break;
+                    }
+                    if (kComma != next_token.at(0)) {
+                        aliasVec.push_back(next_token);
+                    }
+                }
+                is_decl = false;
+                // anonymous struct
+                if (type_name == space) {
+                    StoreStructUnionDef(is_struct, aliasVec.at(0), members);
+                } else {
+                    StoreStructUnionDef(is_struct, type_name, members);
+                }
+                for (auto alias : aliasVec) {
+                    type_alias = space + alias;
+                    struct_aliases_.emplace(type_name, type_alias);
+                }
             } else { // non-typedef
                 if (kSemicolon == token.at(0)) {
                     // format 2
@@ -1415,7 +1427,7 @@ bool TypeParser::ParseFunctionSkip(const std::string& src, size_t& pos) const
 std::string TypeParser::GetNamespace(size_t& pos) const
 {
     std::string space;
-    for (auto it = namespaces_.rbegin(); it != namespaces_.rend(); ++it) {
+    for (auto it = namespaces_.begin(); it != namespaces_.end(); ++it) {
         if (std::get<1>(*it) < pos && std::get<2>(*it) == 0) {
             space += std::get<0>(*it);
             space += "::";

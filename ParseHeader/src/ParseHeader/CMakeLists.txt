@@ -3,9 +3,7 @@ include(${ROOT_DIR}/module.cmake)
 
 # 获取绝对路径
 set(AbsolutePathProject ${CMAKE_CURRENT_SOURCE_DIR})
-
-# 创建项目
-CreateTarget(${AbsolutePathProject} "Dll")
-
 # 预编译
 add_compile_definitions(TYPEPARSER_LIBRARY)
+# 创建项目
+CreateTarget(${AbsolutePathProject} "Dll")

@@ -3,11 +3,9 @@
 
 #include <algorithm>  // std::transform, std::find_if
 #include <cctype>     // std::isspace
-#include <cwctype>    // std::iswspace
 #include <functional> // std::ptr_fun, std::not1
 #include <iomanip>    // std::setfill, std::setw, std::setiosflags
 #include <iostream>   // std::cout, std::endl
-#include <map>        // std::map
 #include <sstream>    // std::ostringstream
 #include <stdlib.h>   // srand, rand
 #include <string>     // std::string
@@ -30,16 +28,14 @@ static inline std::string lower(std::string& str)
 // trim leading spaces
 static inline std::string& ltrim(std::string& str)
 {
-    // str.erase(str.begin(), std::find_if(str.begin(), str.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
-    str.erase(str.begin(), std::find_if(str.begin(), str.end(), std::not1(std::cref(std::iswspace))));
+    str.erase(str.begin(), std::find_if(str.begin(), str.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
     return str;
 }
 
 // trim trailing spaces
 static inline std::string& rtrim(std::string& str)
 {
-    // str.erase(std::find_if(str.rbegin(), str.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), str.end());
-    str.erase(std::find_if(str.rbegin(), str.rend(), std::not1(std::cref(std::iswspace))).base(), str.end());
+    str.erase(std::find_if(str.rbegin(), str.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), str.end());
     return str;
 }
 
@@ -58,8 +54,7 @@ static inline std::string tohex(std::string data, bool big_endian = false, bool 
     std::string::size_type len = data.length();
     unsigned int           byte;
 
-    for (std::string::size_type i = 0; i < len; ++i)
-    {
+    for (std::string::size_type i = 0; i < len; ++i) {
         byte = (big_endian ? data[i] : data[len - i - 1]) & 0xff;
 
         ret << std::hex << std::setfill('0') << std::setw(2) << (upper_case ? std::uppercase : std::nouppercase)
@@ -72,34 +67,30 @@ static inline std::string tohex(std::string data, bool big_endian = false, bool 
 static inline std::string rands()
 {
     srand(static_cast<unsigned int>(time(NULL)));
-
     std::ostringstream os;
     os << rand();
-
     return os.str();
 }
 
 // mini log
-enum LogLevels
-{
+enum LogLevels {
+    kNone,
     kError,
     kDebug,
     kInfo,
 };
-static LogLevels g_log_level = kInfo;
+static LogLevels g_log_level = kError;
 static void      Log(enum LogLevels level, std::string msg)
 {
     if (level > g_log_level)
         return;
 
     std::ostringstream os;
-    switch (level)
-    {
+    switch (level) {
     case kError: os << "ERROR: "; break;
     case kDebug: os << "DEBUG: "; break;
     default: os << "INFO: ";
     }
-
     os << msg;
     std::cout << os.str() << std::endl;
 }

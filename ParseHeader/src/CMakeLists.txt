@@ -1,4 +1,4 @@
 ﻿# 添加子目录，子目录下必须有CMakeLists.txt
 add_subdirectory(ParseHeader)
-add_subdirectory(DataManager)
+add_subdirectory(Manager)
 add_subdirectory(MainWidget)

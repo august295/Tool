@@ -5,21 +5,20 @@
 #include <QtWidgets/QTableWidget>
 #include <QtWidgets/QVBoxLayout>
 
-#include <DataManager/DataManager.h>
+#include <Manager/DataManager.h>
+#include <Manager/FileManager.h>
 #include <ParseHeader/TypeParser.h>
 
-#include "FileManage.h"
 #include "ParseHeaderWidget.h"
 #include "StructOperateWidget.h"
 
 struct ParseHeaderWidget::ParseHeaderWidgetPrivate {
     std::string          m_CurrFile;            // 当前操作文件
+    std::string          m_CurrType;            // 当前结构名称
     StructOperateWidget* m_StructOperateWidget; // 结构体操作界面
 
-    QMenu*   m_TreeRightMenu;   // 树右键菜单
-    QAction* m_ActionAddStruct; // 结构体
-    QAction* m_ActionAddEnum;   // 枚举
-    QAction* m_ActionAddConst;  // 常量
+    QMenu*                  m_TreeRightMenu; // 树右键菜单
+    QMap<QString, QAction*> m_ActionMap;     // 右键按钮
 
     QTableWidget* m_TableWidgetStruct;  // 结构体表格
     QTableWidget* m_TableWidgetEnum;    // 枚举表格
@@ -30,9 +29,6 @@ struct ParseHeaderWidget::ParseHeaderWidgetPrivate {
     {
         m_StructOperateWidget = nullptr;
         m_TreeRightMenu       = nullptr;
-        m_ActionAddStruct     = nullptr;
-        m_ActionAddEnum       = nullptr;
-        m_ActionAddConst      = nullptr;
         m_TableWidgetStruct   = nullptr;
         m_TableWidgetEnum     = nullptr;
         m_TableWidgetConst    = nullptr;
@@ -42,9 +38,10 @@ struct ParseHeaderWidget::ParseHeaderWidgetPrivate {
     {
         delete m_StructOperateWidget;
         delete m_TreeRightMenu;
-        delete m_ActionAddStruct;
-        delete m_ActionAddEnum;
-        delete m_ActionAddConst;
+        for (auto action : m_ActionMap) {
+            delete action;
+        }
+        m_ActionMap.clear();
         delete m_TableWidgetStruct;
         delete m_TableWidgetEnum;
         delete m_TableWidgetConst;
@@ -95,13 +92,16 @@ void ParseHeaderWidget::InitTreeWidget()
     ui.treeWidget->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui.treeWidget, &QTreeWidget::customContextMenuRequested, this, &ParseHeaderWidget::SlotTreeRightMenu);
 
-    m_p->m_TreeRightMenu   = new QMenu;
-    m_p->m_ActionAddStruct = new QAction(tr("增加结构体"));
-    m_p->m_ActionAddEnum   = new QAction(tr("增加枚举"));
-    m_p->m_ActionAddConst  = new QAction(tr("增加常量"));
-    connect(m_p->m_ActionAddStruct, &QAction::triggered, this, &ParseHeaderWidget::SlotAddStruct);
-    connect(m_p->m_ActionAddEnum, &QAction::triggered, this, &ParseHeaderWidget::SlotAddStruct);
-    connect(m_p->m_ActionAddConst, &QAction::triggered, this, &ParseHeaderWidget::SlotAddStruct);
+    m_p->m_TreeRightMenu     = new QMenu;
+    QAction* actionAddStruct = new QAction(tr("增加结构体"));
+    QAction* actionAddEnum   = new QAction(tr("增加枚举"));
+    QAction* actionAddConst  = new QAction(tr("增加常量"));
+    connect(actionAddStruct, &QAction::triggered, this, &ParseHeaderWidget::SlotAddStruct);
+    connect(actionAddEnum, &QAction::triggered, this, &ParseHeaderWidget::SlotAddStruct);
+    connect(actionAddConst, &QAction::triggered, this, &ParseHeaderWidget::SlotAddStruct);
+    m_p->m_ActionMap.insert("actionAddStruct", actionAddStruct);
+    m_p->m_ActionMap.insert("actionAddEnum", actionAddEnum);
+    m_p->m_ActionMap.insert("actionAddConst", actionAddConst);
 }
 
 void ParseHeaderWidget::InitTableWidget()
@@ -166,8 +166,8 @@ void ParseHeaderWidget::ShowTreeWidget(const std::string& selectStr /*= ""*/)
     ui.treeWidget->clear();
 
     // 显示到界面
-    auto typeParserMap = DataManager::GetInstance()->GetTypeParserMap();
-    for (auto parser : typeParserMap) {
+    auto& typeParserMap = DataManager::GetInstance()->GetTypeParserMap();
+    for (auto& parser : typeParserMap) {
         std::string      filename = parser.first;
         QTreeWidgetItem* item     = new QTreeWidgetItem(ROOT);
         item->setText(0, QString::fromStdString(filename.substr(filename.find_last_of('/') + 1)));
@@ -175,28 +175,34 @@ void ParseHeaderWidget::ShowTreeWidget(const std::string& selectStr /*= ""*/)
         ui.treeWidget->addTopLevelItem(item);
 
         // 结构体
-        auto structDefs = parser.second.struct_defs_;
+        auto& structDefs = parser.second.struct_defs_;
         if (structDefs.size() > 0) {
             QTreeWidgetItem* itemStruct = new QTreeWidgetItem(NODE_STRUCT);
             itemStruct->setText(0, QString::fromStdString("Struct"));
             item->addChild(itemStruct);
-            for (auto iter : structDefs) {
+            for (auto& iter : structDefs) {
                 if (iter.first.find(selectStr) != std::string::npos) {
                     QTreeWidgetItem* itemStructChild = new QTreeWidgetItem(LEAF_STRUCT);
                     itemStructChild->setText(0, QString::fromStdString(iter.first));
                     itemStructChild->setData(0, Qt::UserRole, QString::fromStdString(filename));
                     itemStruct->addChild(itemStructChild);
+                    auto& structAliases = parser.second.struct_aliases_;
+                    for (auto alias = structAliases.lower_bound(iter.first); alias != structAliases.upper_bound(iter.first); ++alias) {
+                        QTreeWidgetItem* itemStructAlias = new QTreeWidgetItem(ALIAS_STRUCT);
+                        itemStructAlias->setText(0, QString::fromStdString(alias->second));
+                        itemStructChild->addChild(itemStructAlias);
+                    }
                 }
             }
         }
 
         // 枚举
-        auto enumDefs = parser.second.enum_defs_;
+        auto& enumDefs = parser.second.enum_defs_;
         if (enumDefs.size() > 0) {
             QTreeWidgetItem* itemEnum = new QTreeWidgetItem(NODE_ENUM);
             itemEnum->setText(0, QString::fromStdString("Enum"));
             item->addChild(itemEnum);
-            for (auto iter : enumDefs) {
+            for (auto& iter : enumDefs) {
                 if (iter.first.find(selectStr) != std::string::npos) {
                     QTreeWidgetItem* itemEnumChild = new QTreeWidgetItem(LEAF_ENUM);
                     itemEnumChild->setText(0, QString::fromStdString(iter.first));
@@ -208,7 +214,7 @@ void ParseHeaderWidget::ShowTreeWidget(const std::string& selectStr /*= ""*/)
 
         // 常量
     }
-    ui.treeWidget->expandAll();
+    ui.treeWidget->expandToDepth(1);
 
     // 触发器
     connect(ui.treeWidget, &QTreeWidget::itemClicked, this, &ParseHeaderWidget::SlotDataTypeShow);
@@ -284,7 +290,7 @@ void ParseHeaderWidget::SlotDataTypeSave()
         }
         auto       typeParserMap = DataManager::GetInstance()->GetTypeParserMap();
         TypeParser parser        = typeParserMap[filename];
-        auto       fileLineVec   = FileManage::GetInstance()->GetFileContent(filename);
+        auto       fileLineVec   = FileManager::GetInstance()->GetFileContent(filename);
         for (size_t i = 0; i < fileLineVec.size(); i++) {
             for (auto& stru : structVec) {
                 if (fileLineVec[i].find(stru.first) != std::string::npos && false == stru.second) {
@@ -314,7 +320,7 @@ void ParseHeaderWidget::SlotDataTypeSave()
                 }
             }
         }
-        FileManage::GetInstance()->SaveFile(filename, fileLineVec);
+        FileManager::GetInstance()->SaveFile(filename, fileLineVec);
     }
 }
 
@@ -331,6 +337,8 @@ void ParseHeaderWidget::SlotDataTypeShow(QTreeWidgetItem* item, int column)
         break;
     case LEAF_CONST:
         break;
+    case ALIAS_STRUCT:
+        SlotDataTypeShow(item->parent(), 0);
     default:
         break;
     }
@@ -345,18 +353,18 @@ void ParseHeaderWidget::SlotTreeRightMenu(const QPoint& pos)
         m_p->m_TreeRightMenu->clear();
         switch (item->type()) {
         case ROOT:
-            m_p->m_TreeRightMenu->addAction(m_p->m_ActionAddStruct);
-            m_p->m_TreeRightMenu->addAction(m_p->m_ActionAddEnum);
-            m_p->m_TreeRightMenu->addAction(m_p->m_ActionAddConst);
+            m_p->m_TreeRightMenu->addAction(m_p->m_ActionMap["actionAddStruct"]);
+            m_p->m_TreeRightMenu->addAction(m_p->m_ActionMap["actionAddEnum"]);
+            m_p->m_TreeRightMenu->addAction(m_p->m_ActionMap["actionAddConst"]);
             break;
         case NODE_STRUCT:
-            m_p->m_TreeRightMenu->addAction(m_p->m_ActionAddStruct);
+            m_p->m_TreeRightMenu->addAction(m_p->m_ActionMap["actionAddStruct"]);
             break;
         case NODE_ENUM:
-            m_p->m_TreeRightMenu->addAction(m_p->m_ActionAddEnum);
+            m_p->m_TreeRightMenu->addAction(m_p->m_ActionMap["actionAddEnum"]);
             break;
         case NODE_CONST:
-            m_p->m_TreeRightMenu->addAction(m_p->m_ActionAddConst);
+            m_p->m_TreeRightMenu->addAction(m_p->m_ActionMap["actionAddConst"]);
             break;
         default:
             break;

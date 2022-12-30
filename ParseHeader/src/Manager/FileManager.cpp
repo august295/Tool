@@ -1,22 +1,22 @@
 #include <fstream>
 
-#include "FileManage.h"
+#include "FileManager.h"
 
-FileManage* FileManage::GetInstance()
+FileManager* FileManager::GetInstance()
 {
-    static FileManage m_instance;
+    static FileManager m_instance;
     return &m_instance;
 }
 
-FileManage::FileManage()
+FileManager::FileManager()
 {
 }
 
-FileManage::~FileManage()
+FileManager::~FileManager()
 {
 }
 
-std::vector<std::string> FileManage::GetFileContent(const std::string& file)
+std::vector<std::string> FileManager::GetFileContent(const std::string& file)
 {
     std::vector<std::string> fileLineVec;
     std::ifstream            ifs(file.c_str(), std::ios::in);
@@ -37,7 +37,7 @@ std::vector<std::string> FileManage::GetFileContent(const std::string& file)
     return fileLineVec;
 }
 
-void FileManage::SaveFile(const std::string& file, const std::vector<std::string>& fileLineVec)
+void FileManager::SaveFile(const std::string& file, const std::vector<std::string>& fileLineVec)
 {
     std::ofstream ofs(file.c_str(), std::ios::out);
     if (ofs.fail())

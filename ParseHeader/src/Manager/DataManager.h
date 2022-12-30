@@ -6,15 +6,11 @@
 #include <map>
 #include <list>
 
+#include "GlobalManager.h"
+
 class TypeParser;
 
-#ifdef DATAMANAGER_LIBRARY
-#define DATAMANAGER_EXPORT __declspec(dllexport)
-#else
-#define DATAMANAGER_EXPORT __declspec(dllimport)
-#endif
-
-class DATAMANAGER_EXPORT DataManager
+class MANAGER_EXPORT DataManager
 {
 public:
 	static DataManager* GetInstance();

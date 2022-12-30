@@ -10,8 +10,7 @@
 
 struct StructDeclaration;
 
-class ParseHeaderWidget : public QWidget
-{
+class ParseHeaderWidget : public QWidget {
     Q_OBJECT
 
 public:
@@ -68,8 +67,7 @@ public slots:
     void PackageStruct(const std::string& structName, const std::list<StructDeclaration>& varList, std::vector<std::string>& lineVec);
 
 public:
-    enum NodeType
-    {
+    enum NodeType {
         ROOT = QTreeWidgetItem::UserType,
         NODE_STRUCT,
         NODE_ENUM,
@@ -77,6 +75,7 @@ public:
         LEAF_STRUCT,
         LEAF_ENUM,
         LEAF_CONST,
+        ALIAS_STRUCT,
     };
 
 private:
