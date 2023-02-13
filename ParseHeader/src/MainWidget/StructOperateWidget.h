@@ -4,8 +4,7 @@
 
 #include "ui_StructOperateWidget.h"
 
-class StructOperateWidget : public QWidget
-{
+class StructOperateWidget : public QWidget {
     Q_OBJECT
 
 public:
@@ -37,11 +36,11 @@ public slots:
     ///		6. 完成编辑
     /// <remarks>	August295, 2022/9/7. </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    void on_pushButton_Add();
-    void on_pushButton_Delete();
-    void on_pushButton_Up();
-    void on_pushButton_Down();
-    void on_pushButton_Clear();
+    void SlotPushButtonAdd();
+    void SlotPushButtonDelete();
+    void SlotPushButtonUp();
+    void SlotPushButtonDown();
+    void SlotPushButtonClear();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// <summary>	行操作. </summary>

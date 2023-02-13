@@ -4,8 +4,8 @@
 
 #include "DataManager.h"
 
-struct DataManager::DataManagerPrivate
-{
+struct DataManager::DataManagerPrivate {
+    std::string                                        m_ResourcesPath; // 资源路径
     std::map<std::string, TypeParser>                  m_TypeParserMap; // 头文件解析 map<文件名, 解析类>
     std::map<std::string, std::map<std::string, bool>> m_FileMap;       // 需解析文件 map<文件名, map<修改结构体, 是否保存>>
 };
@@ -13,6 +13,7 @@ struct DataManager::DataManagerPrivate
 DataManager::DataManager()
     : m_p(new DataManagerPrivate)
 {
+    m_p->m_ResourcesPath = "../../../resources/";
 }
 
 DataManager::~DataManager()
@@ -31,44 +32,31 @@ void DataManager::FindFiles(const std::string& folder, std::map<std::string, std
     struct dirent* ent;
     struct stat    entrystat;
 
-    if ((dir = opendir(folder.c_str())) != NULL)
-    {
-        while ((ent = readdir(dir)) != NULL)
-        {
+    if ((dir = opendir(folder.c_str())) != NULL) {
+        while ((ent = readdir(dir)) != NULL) {
             std::string name(ent->d_name);
             if (name.compare(".") == 0 || name.compare("..") == 0)
                 continue;
 
             name = folder + "/" + name;
-            if (0 == stat(name.c_str(), &entrystat))
-            {
-                if (S_ISDIR(entrystat.st_mode))
-                {
+            if (0 == stat(name.c_str(), &entrystat)) {
+                if (S_ISDIR(entrystat.st_mode)) {
                     Info("Searching folder: " + name);
                     FindFiles(name, fileMap);
-                }
-                else
-                {
-                    if (name.length() > 2 && name.substr(name.length() - 2, 2).compare(".h") == 0)
-                    {
+                } else {
+                    if (name.length() > 2 && name.substr(name.length() - 2, 2).compare(".h") == 0) {
                         fileMap.emplace(name, std::map<std::string, bool>());
                         Debug("Found header file: " + name);
-                    }
-                    else
-                    {
+                    } else {
                         Info("Ignoring file: " + name);
                     }
                 }
-            }
-            else
-            {
+            } else {
                 Error("failed to stat file/folder: " + name);
             }
         }
         closedir(dir);
-    }
-    else
-    {
+    } else {
         Error("failed to open folder: " + folder);
     }
 }
@@ -78,17 +66,20 @@ void DataManager::ParseFiles(const std::set<std::string>& includePaths)
     // 解析指定文件夹下头文件
     std::set<std::string> paths = includePaths;
 
-    for (auto path : includePaths)
-    {
+    for (auto path : includePaths) {
         this->FindFiles(path, m_p->m_FileMap);
-        for (auto file : m_p->m_FileMap)
-        {
+        for (auto file : m_p->m_FileMap) {
             std::string filename = file.first;
             TypeParser  parser;
             parser.ParseFile(filename);
             m_p->m_TypeParserMap.emplace(filename, parser);
         }
     }
+}
+
+std::string DataManager::GetResourcesPath()
+{
+    return m_p->m_ResourcesPath;
 }
 
 std::map<std::string, TypeParser>& DataManager::GetTypeParserMap()
@@ -110,20 +101,16 @@ std::list<std::string> DataManager::GetTypeList()
 {
     std::list<std::string> typeList;
     // 基础类型
-    for (auto basic : data_types)
-    {
+    for (auto basic : data_types) {
         typeList.push_back(basic);
     }
-    for (auto parser : m_p->m_TypeParserMap)
-    {
+    for (auto parser : m_p->m_TypeParserMap) {
         // 结构体类型
-        for (auto structDef : parser.second.struct_defs_)
-        {
+        for (auto structDef : parser.second.struct_defs_) {
             typeList.push_back(structDef.first);
         }
         // 枚举类型
-        for (auto enumDef : parser.second.enum_defs_)
-        {
+        for (auto enumDef : parser.second.enum_defs_) {
             typeList.push_back(enumDef.first);
         }
     }
