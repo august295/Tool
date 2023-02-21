@@ -13,7 +13,7 @@ struct DataManager::DataManagerPrivate {
 DataManager::DataManager()
     : m_p(new DataManagerPrivate)
 {
-    m_p->m_ResourcesPath = "../../../resources/";
+    m_p->m_ResourcesPath = "../../resources/";
 }
 
 DataManager::~DataManager()
@@ -77,6 +77,13 @@ void DataManager::ParseFiles(const std::set<std::string>& includePaths)
     }
 }
 
+void DataManager::ParseFile(const std::string& fileName)
+{
+    TypeParser parser;
+    parser.ParseFile(fileName);
+    m_p->m_TypeParserMap.emplace(fileName, parser);
+}
+
 std::string DataManager::GetResourcesPath()
 {
     return m_p->m_ResourcesPath;
@@ -87,12 +94,12 @@ std::map<std::string, TypeParser>& DataManager::GetTypeParserMap()
     return m_p->m_TypeParserMap;
 }
 
-std::map<std::string, std::map<std::string, bool>>& DataManager::GetFileMap()
+std::map<std::string, std::map<std::string, bool>>& DataManager::GetFileUpdateMap()
 {
     return m_p->m_FileMap;
 }
 
-void DataManager::SetFileMap(const std::string& fileName, const std::string& structName, bool change)
+void DataManager::SetFileUpdateMap(const std::string& fileName, const std::string& structName, bool change)
 {
     m_p->m_FileMap[fileName].emplace(structName, change);
 }

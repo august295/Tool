@@ -435,16 +435,20 @@ bool TypeParser::IsNumericToken(const std::string& token, long& number) const
         return false;
     }
     bool ret = true;
-    // stol not supported by gcc, re-write the code to use strtol
-    number = strtol(token.c_str(), NULL, 0);
-
-    if (0L == number) { // no valid conversion could be performed
-        // the token is not a number, then check whether it can be translated into a number
-        if (const_defs_.find(token) != const_defs_.end()) {
-            number = const_defs_.at(token);
-        } else {
-            Debug("Cannot parse token <" + token + "> into a number");
-            ret = false;
+    // the token is '0'
+    if (token == "0") {
+        number = 0;
+    } else {
+        // stol not supported by gcc, re-write the code to use strtol
+        number = strtol(token.c_str(), NULL, 0);
+        if (0L == number) { // no valid conversion could be performed
+            // the token is not a number, then check whether it can be translated into a number
+            if (const_defs_.find(token) != const_defs_.end()) {
+                number = const_defs_.at(token);
+            } else {
+                Debug("Cannot parse token <" + token + "> into a number");
+                ret = false;
+            }
         }
     }
     return ret;

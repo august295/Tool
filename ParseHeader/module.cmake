@@ -39,9 +39,12 @@ macro(CreateTarget AbsolutePathProject Type)
     endif()
 
     if(${Type} STREQUAL "Exe")
-        set_target_properties(${TARGET_NAME} PROPERTIES DEBUG_POSTFIX "d")
         # 生成可执行文件
-        add_executable(${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES} ${FORM_FILES} ${RESOURCE_FILES})
+        add_executable(${PROJECT_NAME}
+            WIN32
+            ${HEADER_FILES} ${SOURCE_FILES} ${FORM_FILES} ${RESOURCE_FILES})
+        set_target_properties(${PROJECT_NAME} PROPERTIES
+            DEBUG_POSTFIX "d")
     else()
         # 生成链接库
         if(${Type} STREQUAL "Lib")
