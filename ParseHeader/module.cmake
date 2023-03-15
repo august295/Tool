@@ -13,7 +13,7 @@ macro(CreateTarget AbsolutePathProject Type)
     project(${PROJECT_NAME})
 
     # 将当前目录下所有源码文件添加到变量
-    set(CURRENT_PATH ".")
+    set(CURRENT_PATH ${CMAKE_CURRENT_SOURCE_DIR})
     set(HEADER_FILES "")
     set(SOURCE_FILES "")
     set(FORM_FILES "")
@@ -31,7 +31,7 @@ macro(CreateTarget AbsolutePathProject Type)
 
     # 头文件搜索的路径
     include_directories(${CURRENT_PATH})
-#    include_directories(${ROOT_DIR}/include)
+    include_directories(${ROOT_DIR}/include)
 
     # 添加 qt 头文件
     if(NOT("${QT_LIBRARY_LIST}" STREQUAL ""))
@@ -52,13 +52,6 @@ macro(CreateTarget AbsolutePathProject Type)
         elseif(${Type} STREQUAL "Dll")
             add_library(${PROJECT_NAME} SHARED ${HEADER_FILES} ${SOURCE_FILES} ${FORM_FILES} ${RESOURCE_FILES})
         endif()
-#        # 生成事件
-#        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E
-#            make_directory ${ROOT_DIR}/include/${PROJECT_NAME}
-#        )
-#        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E
-#            copy ${HEADER_FILES} ${ROOT_DIR}/include/${PROJECT_NAME}
-#        )
     endif()
 
     # 添加 qt 链接库
@@ -66,9 +59,9 @@ macro(CreateTarget AbsolutePathProject Type)
         AddQtLib("${QT_LIBRARY_LIST}")
     endif()
 
-    if(${ARGC} GREATER_EQUAL 3)
+    # 添加项目生成的链接库F
+    foreach(_lib ${SELF_LIBRARY_LIST})
         include_directories(${CURRENT_PATH}/../)
-        link_directories(${BUILD_DIR}/lib)
-        target_link_libraries(${PROJECT_NAME} ${ARGV2})
-    endif()
+        target_link_libraries(${PROJECT_NAME} ${_lib})
+    endforeach()
 endmacro()

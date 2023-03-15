@@ -1,8 +1,9 @@
 #include <algorithm>
-#include <assert.h>
 #include <iostream>
 #include <math.h>
 #include <regex>
+
+#include <spdlog/spdlog.h>
 
 #ifdef WIN32
 #include "dirent.h" // opendir/readdir, @see http://www.softagalleria.net/download/dirent/
@@ -16,13 +17,14 @@
 #include "TypeParser.h"
 #include "utility.h"
 
-TypeParser::~TypeParser(void)
-{
-}
-
 TypeParser::TypeParser(void)
 {
+    spdlog::set_level(spdlog::level::err);
     Initialize();
+}
+
+TypeParser::~TypeParser(void)
+{
 }
 
 void TypeParser::Initialize()
@@ -42,11 +44,14 @@ void TypeParser::Initialize()
     for (std::set<std::string>::const_iterator it = basic_types_.begin(); it != basic_types_.end(); ++it) {
         type_sizes_[*it] = kWordSize_;
     }
-    type_sizes_["void"]             = 0;
-    type_sizes_["char"]             = 1;
-    type_sizes_["short"]            = 2;
-    type_sizes_["bool"]             = 1;
-    type_sizes_["__WCHAR_T_TYPE__"] = 1;
+    type_sizes_["void"]           = 0;
+    type_sizes_["bool"]           = sizeof(bool);
+    type_sizes_["char"]           = sizeof(char);
+    type_sizes_["short"]          = sizeof(short);
+    type_sizes_["unsigned char"]  = sizeof(unsigned char);
+    type_sizes_["unsigned short"] = sizeof(unsigned short);
+    type_sizes_["unsigned int"]   = sizeof(unsigned int);
+    type_sizes_["unsigned long"]  = sizeof(unsigned long);
 }
 
 /// Set header file includsion path
@@ -84,13 +89,13 @@ void TypeParser::ParseFile(const std::string& file)
 {
     std::ifstream ifs(file, std::ios::in);
     if (ifs.fail()) {
-        Error("Failed to open file - " + file);
+        SPDLOG_ERROR("Failed to open file - " + file);
         return;
     }
 
     // flag to true before parsing the file so that it won't be parsed duplicately
     header_files_[file] = true;
-    Debug("Parsing file - " + file);
+    spdlog::debug("Parsing file - " + file);
 
     std::string str = Preprocess(ifs);
     ParseSource(str);
@@ -119,23 +124,23 @@ void TypeParser::FindHeaderFiles(std::string folder)
             name = folder + "/" + name;
             if (0 == stat(name.c_str(), &entrystat)) {
                 if (S_ISDIR(entrystat.st_mode)) {
-                    Info("Searching folder: " + name);
+                    spdlog::info("Searching folder: " + name);
                     FindHeaderFiles(name);
                 } else {
                     if (name.length() > 2 && name.substr(name.length() - 2, 2).compare(".h") == 0) {
                         header_files_[name] = false; // "false" means not yet parsed
-                        Debug("Found header file: " + name);
+                        spdlog::debug("Found header file: " + name);
                     } else {
-                        Info("Ignoring file: " + name);
+                        spdlog::info("Ignoring file: " + name);
                     }
                 }
             } else {
-                Error("failed to stat file/folder: " + name);
+                SPDLOG_ERROR("failed to stat file/folder: " + name);
             }
         }
         closedir(dir);
     } else {
-        Error("failed to open folder: " + folder);
+        SPDLOG_ERROR("failed to open folder: " + folder);
     }
 }
 
@@ -205,7 +210,7 @@ void TypeParser::StripComments(std::list<std::string>& lines) const
         is_block = is_changed = false;
         line                  = *it;
         pos                   = 0;
-        Info("parsing line: [" + line + "]");
+        spdlog::info("parsing line: [" + line + "]");
 
         // search comment start
         while (std::string::npos != (pos = line.find(kSlash, pos))) {
@@ -267,7 +272,7 @@ void TypeParser::StripComments(std::list<std::string>& lines) const
             }
 
             if (is_block) {
-                Error("Unclosed comment block exists");
+                SPDLOG_ERROR("Unclosed comment block exists");
             }
         }
     }
@@ -284,7 +289,10 @@ void TypeParser::WrapLines(std::list<std::string>& lines) const
     while (it != lines.end()) {
         first = it;
         line  = *it;
-        assert(!line.empty());
+        if (line.empty()) {
+            SPDLOG_ERROR("wrap line is empty");
+            exit(-1);
+        }
 
         while ('\\' == line[line.length() - 1] && ++it != lines.end()) {
             line = line.substr(0, line.length() - 1);
@@ -292,7 +300,7 @@ void TypeParser::WrapLines(std::list<std::string>& lines) const
         }
 
         if (it == lines.end()) {
-            Error("Bad syntax: wrap line at last line");
+            SPDLOG_ERROR("Bad syntax: wrap line at last line");
             break;
         }
 
@@ -320,7 +328,10 @@ std::string TypeParser::MergeAllLines(const std::list<std::string>& lines) const
     std::list<std::string>::const_iterator it = lines.begin();
     while (it != lines.end()) {
         line = *it;
-        assert(!line.empty());
+        if (line.empty()) {
+            SPDLOG_ERROR("merge line is empty");
+            exit(-1);
+        }
 
         if ('#' == line.at(0)) { // don't  split pre-processing line
             src += line + EOL;
@@ -384,7 +395,7 @@ std::string TypeParser::GetNextToken(const std::string line, size_t& pos) const
         ++pos; // move to the next character
     }
 
-    Debug("Next token: " + line.substr(start, pos - start));
+    spdlog::debug("Next token: " + line.substr(start, pos - start));
     return (start == pos) ? "" : line.substr(start, pos - start);
 }
 
@@ -446,7 +457,7 @@ bool TypeParser::IsNumericToken(const std::string& token, long& number) const
             if (const_defs_.find(token) != const_defs_.end()) {
                 number = const_defs_.at(token);
             } else {
-                Debug("Cannot parse token <" + token + "> into a number");
+                spdlog::debug("Cannot parse token <" + token + "> into a number");
                 ret = false;
             }
         }
@@ -468,7 +479,7 @@ size_t TypeParser::GetTypeSize(const std::string& type) const
     } else if (enum_defs_.find(type) != enum_defs_.end()) {
         return sizeof(int);
     } else {
-        Error("Unknown data type - " + type);
+        SPDLOG_ERROR("Unknown data type - " + type);
         return -1;
     }
 }
@@ -542,12 +553,18 @@ bool TypeParser::GetNextLine(std::string src, size_t& pos, std::string& line) co
         line = src.substr(start);
         pos  = src.length();
     } else {
-        assert(end != start); // assert fail only when it's an empty line
+        if (end == start) {
+            SPDLOG_ERROR("next line is empty");
+            exit(-1);
+        }
         line = src.substr(start, end - start);
         pos  = end;
     }
 
-    assert(!trim(line).empty());
+    if (trim(line).empty()) {
+        SPDLOG_ERROR("trim line is empty");
+        exit(-1);
+    }
     return true;
 }
 
@@ -560,7 +577,7 @@ bool TypeParser::GetNextLine(std::string src, size_t& pos, std::string& line) co
 void TypeParser::SkipCurrentLine(const std::string& src, size_t& pos, std::string& line) const
 {
     if (pos >= src.length()) {
-        Error("SkipCurrentLine() - std::string offset larger than its length");
+        SPDLOG_ERROR("SkipCurrentLine() - std::string offset larger than its length");
         line.clear();
         return;
     }
@@ -601,12 +618,18 @@ void TypeParser::ParsePreProcDirective(const std::string& src, size_t& pos)
 
     GetNextToken(src, pos, token);
     if (0 == token.compare("include")) {
-        assert(GetNextToken(src, pos, token, false));
+        if (!GetNextToken(src, pos, token, false)) {
+            SPDLOG_ERROR("GetNextToken() error");
+            exit(-1);
+        }
 
         // only handle header file included with ""
         if (kQuotation == token[token.length() - 1]) {
             // get included header file name
-            assert(GetNextToken(src, pos, token, false));
+            if (!GetNextToken(src, pos, token, false)) {
+                SPDLOG_ERROR("GetNextToken() error");
+                exit(-1);
+            }
 
             // parse the header file immediately
             ParseFile(token);
@@ -616,20 +639,23 @@ void TypeParser::ParsePreProcDirective(const std::string& src, size_t& pos)
         } else {
             // ignore angle bracket (<>)
             SkipCurrentLine(src, pos, line);
-            Info("Skip header file included by <> - " + line);
+            spdlog::info("Skip header file included by <> - " + line);
         }
     } else if (0 == token.compare("define")) {
-        assert(GetNextToken(src, pos, last_token, false));
+        if (!GetNextToken(src, pos, last_token, false)) {
+            SPDLOG_ERROR("GetNextToken() error");
+            exit(-1);
+        }
 
         if (GetNextToken(src, pos, token, false) && IsNumericToken(token, number)) {
             const_defs_.insert(make_pair(last_token, number));
         } else {
             SkipCurrentLine(src, pos, line);
-            Info("Ignore define - " + line);
+            spdlog::info("Ignore define - " + line);
         }
     } else {
         SkipCurrentLine(src, pos, line);
-        Info("Skip unsupported pre-processing line - " + line);
+        spdlog::info("Skip unsupported pre-processing line - " + line);
     }
 }
 
@@ -662,7 +688,7 @@ void TypeParser::ParseSource(const std::string& src)
                 break;
             default:
                 SkipCurrentLine(src, pos, line);
-                Debug("Character '" + token + "' unexpected, ignore the line");
+                spdlog::debug("Character '" + token + "' unexpected, ignore the line");
             }
         } else {
             type = GetTokenType(token);
@@ -670,7 +696,7 @@ void TypeParser::ParseSource(const std::string& src)
             case kStructKeyword:
             case kUnionKeyword:
                 if (!ParseStructUnion((kStructKeyword == type) ? true : false, is_typedef, src, pos, decl, is_decl) && is_decl) {
-                    Error("Bad syntax for struct/union variable declaration");
+                    SPDLOG_ERROR("Bad syntax for struct/union variable declaration");
                     return;
                 }
                 // reset is_typedef
@@ -678,7 +704,7 @@ void TypeParser::ParseSource(const std::string& src)
                 break;
             case kEnumKeyword:
                 if (!ParseEnum(is_typedef, src, pos, decl, is_decl) || is_decl) {
-                    Error("Bad syntax for nested enum variable declaration");
+                    SPDLOG_ERROR("Bad syntax for nested enum variable declaration");
                     return;
                 }
                 is_typedef = false;
@@ -688,9 +714,12 @@ void TypeParser::ParseSource(const std::string& src)
                 break;
             case kBasicDataType:
                 // only (const) global variable are supported
-                assert(GetRestLine(src, pos, line));
+                if (!GetRestLine(src, pos, line)) {
+                    SPDLOG_ERROR("GetRestLine() error");
+                    exit(-1);
+                }
                 if (!ParseAssignExpression(line)) {
-                    Debug("Expression not supported - " + line);
+                    spdlog::debug("Expression not supported - " + line);
                 }
                 break;
             case kNamespaceKeyword:
@@ -718,13 +747,19 @@ bool TypeParser::ParseEnum(const bool is_typedef, const std::string& src, size_t
     int  last_value     = -1;
     bool is_last_member = false;
 
-    assert(!src.empty() && pos < src.length());
+    if (src.empty() || pos > src.length()) {
+        SPDLOG_ERROR("ParseEnum() error");
+        exit(-1);
+    }
 
     size_t start = pos; // store the original position for next guess
 
     // peek rest of current line starting from "pos"
     if (!GetRestLine(src, pos, line)) {
-        assert(GetNextLine(src, pos, line));
+        if (!GetNextLine(src, pos, line)) {
+            SPDLOG_ERROR("GetNextLine() error");
+            exit(-1);
+        }
     }
 
     // it might be just a simple enum variable declaration like: enum Home home;
@@ -734,10 +769,16 @@ bool TypeParser::ParseEnum(const bool is_typedef, const std::string& src, size_t
 
     // else, next token should be either '{' or a typename followed by '{'
     pos = start; // reset the position
-    assert(GetNextToken(src, pos, token));
+    if (!GetNextToken(src, pos, token)) {
+        SPDLOG_ERROR("GetNextToken() error");
+        exit(-1);
+    }
     if (kBlockStart != token.at(0)) {
         type_name = token;
-        assert(GetNextToken(src, pos, token) && kBlockStart == token.at(0));
+        if (!GetNextToken(src, pos, token) || kBlockStart != token.at(0)) {
+            SPDLOG_ERROR("GetNextToken() error");
+            exit(-1);
+        }
     }
 
     // the following part should be:
@@ -747,29 +788,33 @@ bool TypeParser::ParseEnum(const bool is_typedef, const std::string& src, size_t
         if (kBlockEnd == token.at(0)) { // reach block end
             // process rest part after block end
             start = 1;
-            assert(GetNextToken(src, pos, token));
+            if (!GetNextToken(src, pos, token)) {
+                SPDLOG_ERROR("GetNextToken() error");
+                exit(-1);
+            }
 
             std::string space = GetNamespace(pos);
             type_name         = space + type_name;
             if (is_typedef) {
                 // format 1
-                assert(GetNextToken(src, pos, next_token) && kSemicolon == next_token.at(0));
+                if (!GetNextToken(src, pos, next_token) || kSemicolon != next_token.at(0)) {
+                    SPDLOG_ERROR("GetNextToken() error");
+                    exit(-1);
+                }
                 is_decl                 = false;
                 type_alias              = space + token;
                 enum_defs_[type_alias]  = members;
                 type_sizes_[type_alias] = sizeof(int);
                 type_name               = type_alias;
-
-                //                if (!type_name.empty() && type_alias.compare(type_name) != 0) {
-                //                    enum_defs_[type_name]  = members; // type name
-                //                    type_sizes_[type_name] = sizeof(int);
-                //                }
             } else {
                 // non-typedef
                 if (kSemicolon == token.at(0)) {
                     // format 2
                     is_decl = false;
-                    assert(!type_name.empty());
+                    if (type_name.empty()) {
+                        SPDLOG_ERROR("type_name is empty");
+                        exit(-1);
+                    }
                     enum_defs_[type_name]  = members;
                     type_sizes_[type_name] = sizeof(int);
                 } else {
@@ -789,13 +834,16 @@ bool TypeParser::ParseEnum(const bool is_typedef, const std::string& src, size_t
                     type_sizes_[type_name] = sizeof(int);
 
                     if (!GetRestLine(src, pos, line)) {
-                        assert(GetNextLine(src, pos, line));
+                        if(!GetNextLine(src, pos, line)){
+                            SPDLOG_ERROR("GetNextLine() error");
+                            exit(-1);
+                        }
                     }
 
                     // for easier parsing, make a declaration by adding the <type_name> before <var>
                     line = type_name + " " + token + " " + line;
                     if (!ParseDeclaration(line, var_decl)) {
-                        Error("Bad syntax for enum type of variable declaration after {} block");
+                        SPDLOG_ERROR("Bad syntax for enum type of variable declaration after {} block");
                         return false;
                     }
                 }
@@ -816,7 +864,7 @@ bool TypeParser::ParseEnum(const bool is_typedef, const std::string& src, size_t
 
             // parse enum member declarations
             if (is_last_member) {
-                Error("Bad enum member declaration in last line");
+                SPDLOG_ERROR("Bad enum member declaration in last line");
                 return false;
             }
 
@@ -825,7 +873,7 @@ bool TypeParser::ParseEnum(const bool is_typedef, const std::string& src, size_t
 
             line = token + " " + line;
             if (!ParseEnumDeclaration(line, last_value, member, is_last_member)) {
-                Error("Unresolved enum member declaration syntax");
+                SPDLOG_ERROR("Unresolved enum member declaration syntax");
                 return false;
             }
 
@@ -838,7 +886,7 @@ bool TypeParser::ParseEnum(const bool is_typedef, const std::string& src, size_t
                 member.m_comment = "";
             }
 
-            Info("Add enum member: " + member.m_name);
+            spdlog::info("Add enum member: " + member.m_name);
             members.push_back(member);
         }
     }
@@ -884,13 +932,19 @@ bool TypeParser::ParseStructUnion(const bool is_struct, const bool is_typedef, c
     std::string                  line, token, next_token;
     std::string                  type_name, type_alias;
 
-    assert(!src.empty() && pos < src.length());
+    if (src.empty() || pos > src.length()) {
+        SPDLOG_ERROR("ParseStructUnion() error");
+        exit(-1);
+    }
 
     size_t start = pos; // store the original position for next guess
 
     // peek rest of current line starting from "pos"
     if (!GetRestLine(src, pos, line)) {
-        assert(GetNextLine(src, pos, line));
+        if (!GetNextLine(src, pos, line)) {
+            SPDLOG_ERROR("GetNextLine() error");
+            exit(-1);
+        }
     }
 
     // it might be just a simple struct/union variable declaration as format 5
@@ -900,10 +954,16 @@ bool TypeParser::ParseStructUnion(const bool is_struct, const bool is_typedef, c
 
     // else, next token should be either '{' or a typename followed by '{'
     pos = start; // reset the position
-    assert(GetNextToken(src, pos, token));
+    if (!GetNextToken(src, pos, token)) {
+        SPDLOG_ERROR("GetNextToken() error");
+        exit(-1);
+    }
     if (kBlockStart != token.at(0)) {
         type_name = token;
-        assert(GetNextToken(src, pos, token) && kBlockStart == token.at(0));
+        if (!GetNextToken(src, pos, token) || kBlockStart != token.at(0)) {
+            SPDLOG_ERROR("GetNextToken() error");
+            exit(-1);
+        }
     }
 
     // the following part should be:
@@ -913,7 +973,10 @@ bool TypeParser::ParseStructUnion(const bool is_struct, const bool is_typedef, c
         if (kBlockEnd == token.at(0)) {
             // process rest part after block end
             start = 1;
-            assert(GetNextToken(src, pos, token));
+            if (!GetNextToken(src, pos, token)) {
+                SPDLOG_ERROR("GetNextToken() error");
+                exit(-1);
+            }
 
             std::string space = GetNamespace(pos);
             type_name         = space + type_name;
@@ -944,7 +1007,10 @@ bool TypeParser::ParseStructUnion(const bool is_struct, const bool is_typedef, c
                 if (kSemicolon == token.at(0)) {
                     // format 2
                     is_decl = false;
-                    assert(!type_name.empty());
+                    if (type_name.empty()) {
+                        SPDLOG_ERROR("type_name is empty");
+                        exit(-1);
+                    }
                     StoreStructUnionDef(is_struct, type_name, members);
                 } else {
                     // token must be part of a variable declaration
@@ -961,13 +1027,16 @@ bool TypeParser::ParseStructUnion(const bool is_struct, const bool is_typedef, c
                     StoreStructUnionDef(is_struct, type_name, members);
 
                     if (!GetRestLine(src, pos, line)) {
-                        assert(GetNextLine(src, pos, line));
+                        if (!GetNextLine(src, pos, line)) {
+                            SPDLOG_ERROR("GetNextLine() error");
+                            exit(-1);
+                        }
                     }
 
                     // for easier parsing, make a declaration by adding the <type_name> before <var>
                     line = type_name + " " + token + " " + line;
                     if (!ParseDeclaration(line, var_decl)) {
-                        Error("Bad syntax for struct/union type of variable declaration after {} block");
+                        SPDLOG_ERROR("Bad syntax for struct/union type of variable declaration after {} block");
                         return false;
                     }
                 }
@@ -987,21 +1056,27 @@ bool TypeParser::ParseStructUnion(const bool is_struct, const bool is_typedef, c
                 // bool is_declare;
                 // StructDeclaration var_decl;
                 if (!ParseStructUnion((kStructKeyword == type) ? true : false, false, src, pos, member, is_decl)) {
-                    Error("Bad syntax for nested struct/union variable declaration");
+                    SPDLOG_ERROR("Bad syntax for nested struct/union variable declaration");
                     return false;
                 }
 
                 // TODO: also check position here
-                assert(is_decl);
+                if (!is_decl) {
+                    SPDLOG_ERROR("it is not a struct declaration");
+                    exit(-1);
+                }
                 members.push_back(member);
             } else if (kEnumKeyword == type) {
                 if (!ParseEnum(false, src, pos, member, is_decl)) {
-                    Error("Bad syntax for nested enum variable declaration");
+                    SPDLOG_ERROR("Bad syntax for nested enum variable declaration");
                     return false;
                 }
 
                 // TODO: also check position here
-                assert(is_decl);
+                if (!is_decl) {
+                    SPDLOG_ERROR("it is not a enum declaration");
+                    exit(-1);
+                }
                 members.push_back(member);
             } else {
                 // skip useless comments
@@ -1012,7 +1087,10 @@ bool TypeParser::ParseStructUnion(const bool is_struct, const bool is_typedef, c
 
                 // regular struct/union member declaration, including format 5
                 if (!GetRestLine(src, pos, line)) {
-                    assert(GetNextLine(src, pos, line));
+                    if (!GetNextLine(src, pos, line)) {
+                        SPDLOG_ERROR("GetNextLine() error");
+                        exit(-1);
+                    }
                 }
 
                 line = token + line;
@@ -1024,20 +1102,20 @@ bool TypeParser::ParseStructUnion(const bool is_struct, const bool is_typedef, c
                 }
 
                 if (!ParseDeclaration(line, member)) {
-                    Error("Unresolved struct/union member declaration syntax");
+                    SPDLOG_ERROR("Unresolved struct/union member declaration syntax");
                     return false;
                 }
 
                 // parse comments
                 size_t index = pos;
-                GetNextToken(src, index, token);
-                if (token == "/") {
+                GetNextToken(src, index, next_token);
+                if (next_token == "/") {
                     ParseComment(src, pos, member.m_comment);
                 } else {
                     member.m_comment = "";
                 }
 
-                Info("Add member: " + member.m_name);
+                spdlog::info("Add member: " + member.m_name);
                 members.push_back(member);
             }
         }
@@ -1095,15 +1173,21 @@ bool TypeParser::ParseEnumDeclaration(const std::string& line,
         break;
 
     case 2:
-        assert(kComma == tokens[1].at(0));
+        if (kComma != tokens[1].at(0)) {
+            SPDLOG_ERROR("token[1] is not kComma");
+            exit(-1);
+        }
         decl.m_value = ++last_value;
         break;
 
     case 3:
-        assert(kEqual == tokens[1].at(0));
+        if (kEqual != tokens[1].at(0)) {
+            SPDLOG_ERROR("token[1] is not kEqual");
+            exit(-1);
+        }
 
         if (!IsNumericToken(tokens[2], number)) {
-            Error("Cannot convert token into a number - " + tokens[2]);
+            SPDLOG_ERROR("Cannot convert token into a number - " + tokens[2]);
             return false;
         }
 
@@ -1112,10 +1196,13 @@ bool TypeParser::ParseEnumDeclaration(const std::string& line,
         break;
 
     case 4:
-        assert(kEqual == tokens[1].at(0) && kComma == tokens[3].at(0));
+        if (kEqual != tokens[1].at(0) || kComma != tokens[3].at(0)) {
+            SPDLOG_ERROR("token[1] is not kEqual, token[3] is not kEqual");
+            exit(-1);
+        }
 
         if (!IsNumericToken(tokens[2], number)) {
-            Error("Cannot convert token into a number - " + tokens[2]);
+            SPDLOG_ERROR("Cannot convert token into a number - " + tokens[2]);
             return false;
         }
 
@@ -1123,7 +1210,7 @@ bool TypeParser::ParseEnumDeclaration(const std::string& line,
         break;
 
     default:
-        Error("Bad syntax for enum member declaration - " + line);
+        SPDLOG_ERROR("Bad syntax for enum member declaration - " + line);
         return false;
     }
 
@@ -1147,21 +1234,33 @@ bool TypeParser::ParseEnumDeclaration(const std::string& line,
 /// @note can be improved with consideration of multiple demension array
 bool TypeParser::ParseDeclaration(const std::string& line, StructDeclaration& decl) const
 {
-    assert(!line.empty());
+    if (line.empty()) {
+        SPDLOG_ERROR("line is empty");
+        exit(-1);
+    }
     if (line[line.length() - 1] != kSemicolon)
         return false;
 
     std::vector<std::string> tokens;
     size_t                   size = SplitLineIntoTokens(line, tokens);
-    assert(size >= 3); // even the simplest declaration contains 3 tokens: type var ;
+    // even the simplest declaration contains 3 tokens: type var ;
+    if (size < 3) {
+        SPDLOG_ERROR("size less 3");
+        exit(-1);
+    }
 
-    size_t index      = 0;
-    decl.m_type       = tokens[index];
+    size_t index = 0;
+    // multiple declarations
+    decl.m_type = tokens[index];
+    while (kBasicDataType == GetTokenType(tokens[++index])) {
+        decl.m_type += " " + tokens[index];
+    }
+    --index;
     decl.m_is_pointer = false;
 
     size_t length = GetTypeSize(decl.m_type);
     if (0 == length) {
-        Debug("Unknown data type - " + decl.m_type);
+        spdlog::debug("Unknown data type - " + decl.m_type);
         return false;
     }
 
@@ -1179,7 +1278,7 @@ bool TypeParser::ParseDeclaration(const std::string& line, StructDeclaration& de
             decl.m_size_array = number;
             length *= number;
         } else {
-            Error("Array size cannot be parsed into a number - " + tokens[index]);
+            SPDLOG_ERROR("Array size cannot be parsed into a number - " + tokens[index]);
             return false;
         }
     } else {
@@ -1261,9 +1360,9 @@ size_t TypeParser::PadStructMembers(std::list<StructDeclaration>& members)
             // size can only be less than 4 (1 or 2) now unless it's an array
             if (size >= kAlignment_) {
                 if (it->m_size_array > 0) {
-                    Debug("TODO: add array support in PadStructMembers()");
+                    spdlog::debug("TODO: add array support in PadStructMembers()");
                 } else {
-                    Error("Incorrect type size for " + it->m_name);
+                    SPDLOG_ERROR("Incorrect type size for " + it->m_name);
                 }
 
                 return 0;
@@ -1286,16 +1385,19 @@ size_t TypeParser::PadStructMembers(std::list<StructDeclaration>& members)
                     last_size = 0;
                     ++it;
                 } else {
-                    Error("Bad member size - " + std::to_string(size));
+                    SPDLOG_ERROR("Bad member size - " + std::to_string(size));
                     return 0;
                 }
             } else if (2 == last_size) {
-                assert(1 == size);
+                if (1 != size) {
+                    SPDLOG_ERROR("size not equal 1");
+                    exit(-1);
+                }
                 members.insert(++it, MakePadField(1));
                 total += kAlignment_;
                 last_size = 0;
             } else {
-                Error("Bad alignment");
+                SPDLOG_ERROR("Bad alignment");
                 return 0;
             }
         }

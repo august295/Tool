@@ -16,7 +16,7 @@ typedef enum Home
 typedef struct Manager
 {
     char a;
-    int level;
+    unsigned int level;
 } Manager;
 
 //*

@@ -8,4 +8,4 @@ set(SELF_LIBRARY_LIST "ParseHeader")
 # 预编译
 add_compile_definitions(MANAGER_LIBRARY)
 # 创建项目
-CreateTarget(${AbsolutePathProject} "Dll" "${SELF_LIBRARY_LIST}")
+CreateTarget(${AbsolutePathProject} "Dll")

@@ -175,9 +175,9 @@ private:
     std::string GetNamespace(size_t& pos) const;
 
 public:
-    static const char   EOL         = '$'; ///< end of line, used to delimit the source lines within a std::string
-    static const size_t kAlignment_ = 4;   ///< alignment @toto: make this changeable
-    static const size_t kWordSize_  = 4;   ///< size of a machine word on a 32-bit system
+    static const char   EOL         = '$';         ///< end of line, used to delimit the source lines within a std::string
+    static const size_t kAlignment_ = sizeof(int); ///< alignment, if use "#pragma pack(size)" please update
+    static const size_t kWordSize_  = sizeof(int); ///< size of a machine word on a system, use "int"
 
 public:
     /// namespace

@@ -1,6 +1,7 @@
+#include <iostream>
+
 #include <ParseHeader/TypeParser.h>
 #include <ParseHeader/dirent.h>
-#include <ParseHeader/utility.h>
 
 #include "DataManager.h"
 
@@ -41,23 +42,23 @@ void DataManager::FindFiles(const std::string& folder, std::map<std::string, std
             name = folder + "/" + name;
             if (0 == stat(name.c_str(), &entrystat)) {
                 if (S_ISDIR(entrystat.st_mode)) {
-                    Info("Searching folder: " + name);
+                    std::cout << "Searching folder: " << name << std::endl;
                     FindFiles(name, fileMap);
                 } else {
                     if (name.length() > 2 && name.substr(name.length() - 2, 2).compare(".h") == 0) {
                         fileMap.emplace(name, std::map<std::string, bool>());
-                        Debug("Found header file: " + name);
+                        std::cout << "Found header file: " << name << std::endl;
                     } else {
-                        Info("Ignoring file: " + name);
+                        std::cout << "Ignoring file: " << name << std::endl;
                     }
                 }
             } else {
-                Error("failed to stat file/folder: " + name);
+                std::cout << "failed to stat file/folder: " << name << std::endl;
             }
         }
         closedir(dir);
     } else {
-        Error("failed to open folder: " + folder);
+        std::cout << "failed to open folder: " << folder << std::endl;
     }
 }
 

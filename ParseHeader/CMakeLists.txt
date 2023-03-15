@@ -6,9 +6,7 @@ project(ParseHeader)
 
 # C++标准
 set(CMAKE_CXX_STANDARD 11)
-# MSVC 强制使用 utf-8
-add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
-add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+add_compile_options("-Wa,-mbig-obj")
 
 # 设置根目录
 set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})

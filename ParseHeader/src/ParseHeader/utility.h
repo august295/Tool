@@ -72,30 +72,4 @@ static inline std::string rands()
     return os.str();
 }
 
-// mini log
-enum LogLevels {
-    kNone,
-    kError,
-    kDebug,
-    kInfo,
-};
-static LogLevels g_log_level = kError;
-static void      Log(enum LogLevels level, std::string msg)
-{
-    if (level > g_log_level)
-        return;
-
-    std::ostringstream os;
-    switch (level) {
-    case kError: os << "ERROR: "; break;
-    case kDebug: os << "DEBUG: "; break;
-    default: os << "INFO: ";
-    }
-    os << msg;
-    std::cout << os.str() << std::endl;
-}
-static void Error(std::string msg) { Log(kError, msg); }
-static void Debug(std::string msg) { Log(kDebug, msg); }
-static void Info(std::string msg) { Log(kInfo, msg); }
-
 #endif // _UTILITY_H_

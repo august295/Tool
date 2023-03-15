@@ -9,4 +9,4 @@ set(QT_LIBRARY_LIST "Core" "Gui" "Widgets")
 set(SELF_LIBRARY_LIST "ParseHeader" "Manager")
 
 # 创建项目
-CreateTarget(${AbsolutePathProject} "Exe" "${SELF_LIBRARY_LIST}")
+CreateTarget(${AbsolutePathProject} "Exe")

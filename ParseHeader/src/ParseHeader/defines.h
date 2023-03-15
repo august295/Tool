@@ -58,9 +58,9 @@ enum TokenTypes {
     kNamespaceKeyword,
     kUsingKeyword,
 
+    // @see data_types
     kBasicDataType,
-    kAbstractType,
-    kComplexType,
+    // @see qualifiers
     kQualifier,
 
     // user-defined tokens
@@ -88,6 +88,8 @@ enum SingleToken {
 
 // 基本数据类型
 static const std::vector<std::string> data_types = {
+    "signed",
+    "unsigned",
     "char",
     "short",
     "int",
@@ -102,8 +104,6 @@ static const std::vector<std::string> data_types = {
 static const std::vector<std::string> qualifiers = {
     "static",
     "const",
-    "signed",
-    "unsigned",
     "far",
     "extern",
     "volatile",
