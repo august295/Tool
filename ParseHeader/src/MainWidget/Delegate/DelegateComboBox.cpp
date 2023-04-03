@@ -17,7 +17,6 @@ QWidget* DelegateComboBox::createEditor(QWidget* parent, const QStyleOptionViewI
 
     // 实现可编辑并模糊查询
     QComboBox*        comboBox  = new QComboBox(parent);
-    QLineEdit*        lineEdit  = new QLineEdit;
     QCompleter*       completer = new QCompleter;
     QStringListModel* lisModel  = new QStringListModel;
     lisModel->setStringList(_StructTypeList);
@@ -27,7 +26,6 @@ QWidget* DelegateComboBox::createEditor(QWidget* parent, const QStyleOptionViewI
     comboBox->addItems(_StructTypeList);                // 添加列表
     comboBox->setEditable(true);                        // 设置可编辑
     comboBox->setCompleter(completer);                  // 模糊匹配
-    comboBox->setLineEdit(lineEdit);                    // 与编辑绑定
 
     return comboBox;
 }
@@ -51,7 +49,7 @@ void DelegateComboBox::setModelData(QWidget* editor, QAbstractItemModel* model, 
     model->setData(index, str);
 }
 
-void DelegateComboBox::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const
+void DelegateComboBox::updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
     Q_UNUSED(index);
     // 更新控件位置大小

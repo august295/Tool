@@ -1,16 +1,12 @@
-# 允许小项目分类
-SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
-
-macro(CreateTarget AbsolutePathProject Type)
+macro(CreateTarget ProjectName Type)
     # 引入 qt 宏
     if(NOT("${QT_LIBRARY_LIST}" STREQUAL ""))
         include(${ROOT_DIR}/module_qt.cmake)
     endif()
 
     # 项目名称
-    message(STATUS ${AbsolutePathProject})
-    get_filename_component(PROJECT_NAME ${AbsolutePathProject} NAME)
-    project(${PROJECT_NAME})
+    message(STATUS ${ProjectName})
+    project(${ProjectName})
 
     # 将当前目录下所有源码文件添加到变量
     set(CURRENT_PATH ${CMAKE_CURRENT_SOURCE_DIR})
@@ -18,16 +14,23 @@ macro(CreateTarget AbsolutePathProject Type)
     set(SOURCE_FILES "")
     set(FORM_FILES "")
     set(RESOURCE_FILES "")
-    file(GLOB HEADER_FILES "${CURRENT_PATH}/*.h" "${CURRENT_PATH}/*.hpp")
-    file(GLOB SOURCE_FILES "${CURRENT_PATH}/*.c" "${CURRENT_PATH}/*.cpp")
-    file(GLOB FORM_FILES "${CURRENT_PATH}/*.ui")
-    file(GLOB RESOURCE_FILES "${CURRENT_PATH}/*.qrc")
+    file(GLOB_RECURSE HEADER_FILES "${CURRENT_PATH}/*.h" "${CURRENT_PATH}/*.hpp")
+    file(GLOB_RECURSE SOURCE_FILES "${CURRENT_PATH}/*.c" "${CURRENT_PATH}/*.cpp")
+    file(GLOB_RECURSE FORM_FILES "${CURRENT_PATH}/*.ui")
+    file(GLOB_RECURSE RESOURCE_FILES "${CURRENT_PATH}/*.qrc")
 
     # 文件分类
-    source_group("Header Files" FILES ${HEADER_FILES})
-    source_group("Source Files" FILES ${SOURCE_FILES})
-    source_group("Form Files" FILES ${FORM_FILES})
-    source_group("Resource Files" FILES ${RESOURCE_FILES})
+    if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+        source_group(TREE ${CURRENT_PATH} PREFIX "Header Files" FILES ${HEADER_FILES})
+        source_group(TREE ${CURRENT_PATH} PREFIX "Source Files" FILES ${SOURCE_FILES})
+        source_group(TREE ${CURRENT_PATH} PREFIX "Form Files" FILES ${FORM_FILES})
+        source_group(TREE ${CURRENT_PATH} PREFIX "Resource Files" FILES ${RESOURCE_FILES})
+    else()
+        source_group("Header Files" FILES ${HEADER_FILES})
+        source_group("Source Files" FILES ${SOURCE_FILES})
+        source_group("Form Files" FILES ${FORM_FILES})
+        source_group("Resource Files" FILES ${RESOURCE_FILES})
+    endif()
 
     # 头文件搜索的路径
     include_directories(${CURRENT_PATH})
@@ -59,7 +62,7 @@ macro(CreateTarget AbsolutePathProject Type)
         AddQtLib("${QT_LIBRARY_LIST}")
     endif()
 
-    # 添加项目生成的链接库F
+    # 添加项目生成的链接库
     foreach(_lib ${SELF_LIBRARY_LIST})
         include_directories(${CURRENT_PATH}/../)
         target_link_libraries(${PROJECT_NAME} ${_lib})

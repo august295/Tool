@@ -1,5 +1,6 @@
+#include "Delegate/DelegateComboBox.h"
+
 #include "StructOperateWidget.h"
-#include "DelegateComboBox.h"
 
 StructOperateWidget::StructOperateWidget(QWidget* parent /*= Q_NULLPTR*/)
     : QWidget(parent)
