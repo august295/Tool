@@ -47,7 +47,8 @@ macro(CreateTarget ProjectName Type)
             WIN32
             ${HEADER_FILES} ${SOURCE_FILES} ${FORM_FILES} ${RESOURCE_FILES})
         set_target_properties(${PROJECT_NAME} PROPERTIES
-            DEBUG_POSTFIX "d")
+            DEBUG_POSTFIX "d"
+            VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)")
     else()
         # 生成链接库
         if(${Type} STREQUAL "Lib")

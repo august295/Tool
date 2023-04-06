@@ -177,7 +177,6 @@ std::string TypeParser::Preprocess(std::ifstream& ifs) const
 
     while (ifs.good()) {
         getline(ifs, line);
-
         if (!trim(line).empty()) {
             lines.push_back(line);
         }
@@ -503,7 +502,7 @@ bool TypeParser::GetNextToken(std::string src, size_t& pos, std::string& token, 
     }
 
     // skip leading blanks or EOL
-    while (pos < src.length() && (isspace(src[pos]) || EOL == src[pos]))
+    while (pos < src.length() && (my_isspace(src[pos]) || EOL == src[pos]))
         pos++;
 
     if (pos >= src.length()) {
@@ -1495,7 +1494,7 @@ bool TypeParser::ParseCommentSkip(const std::string& src, size_t& pos) const
     } else if (token == "*") {
         GetRestLine(src, index, token);
         while (true) {
-            if (token[token.size() - 2] == '*' && token[token.size() - 1] == '/') {
+            if (!token.empty() && token[token.size() - 2] == '*' && token[token.size() - 1] == '/') {
                 pos = index;
                 return true;
             }

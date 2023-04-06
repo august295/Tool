@@ -1,8 +1,6 @@
 #ifndef __TEST2_H__
 #define __TEST2_H__
 
-#include <string>
-
 namespace AAA {
 namespace BBB {
 typedef struct TestStruct {

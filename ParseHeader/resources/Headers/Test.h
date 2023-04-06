@@ -1,8 +1,6 @@
 #ifndef __TEST_H__
 #define __TEST_H__
 
-#include <string>
-
 // 枚举
 enum Topic {
     // 1231

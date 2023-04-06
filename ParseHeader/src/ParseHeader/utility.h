@@ -25,17 +25,26 @@ inline std::string lower(std::string& str)
     return str;
 }
 
+// std::isspace range (0, 255), for utf-8 must be +256
+inline int my_isspace(int c)
+{
+    if (c < 0) {
+        c += 256;
+    }
+    return std::isspace(c);
+}
+
 // trim leading spaces
 inline std::string& ltrim(std::string& str)
 {
-    str.erase(str.begin(), std::find_if(str.begin(), str.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+    str.erase(str.begin(), std::find_if(str.begin(), str.end(), std::not1(std::ptr_fun<int, int>(my_isspace))));
     return str;
 }
 
 // trim trailing spaces
 inline std::string& rtrim(std::string& str)
 {
-    str.erase(std::find_if(str.rbegin(), str.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), str.end());
+    str.erase(std::find_if(str.rbegin(), str.rend(), std::not1(std::ptr_fun<int, int>(my_isspace))).base(), str.end());
     return str;
 }
 
