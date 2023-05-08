@@ -6,4 +6,3 @@ build
 
 # VSCode Format
 .vscode
-.clang-format

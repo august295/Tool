@@ -8,17 +8,17 @@ project(ParseHeader)
 set(CMAKE_CXX_STANDARD 11)
 
 # 条件编译
-if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+if(CMAKE_CXX_PLATFORM_ID MATCHES "Windows")
     add_compile_options("/utf-8")
     add_compile_definitions(NOMINMAX)
-else()
+elseif(CMAKE_CXX_PLATFORM_ID MATCHES "MinGW")
     add_compile_options("-Wa,-mbig-obj")
+elseif(CMAKE_CXX_PLATFORM_ID MATCHES "Linux")
+    add_compile_options("-fPIC")
 endif()
 
-# 开启使用文件夹功能
+# 开启使用文件夹功能，将所有默认目标放入到名为 CMakePredefinedTargets 的文件夹中
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-
-# 将所有默认目标放入到名为 CMakePredefinedTargets 的文件夹中
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMakePredefinedTargets")
 
 # 设置根目录

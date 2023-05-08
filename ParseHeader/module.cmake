@@ -20,16 +20,17 @@ macro(CreateTarget ProjectName Type)
     file(GLOB_RECURSE RESOURCE_FILES "${CURRENT_PATH}/*.qrc")
 
     # 文件分类
-    if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    if(CMAKE_CXX_PLATFORM_ID MATCHES "Windows")
         source_group(TREE ${CURRENT_PATH} PREFIX "Header Files" FILES ${HEADER_FILES})
         source_group(TREE ${CURRENT_PATH} PREFIX "Source Files" FILES ${SOURCE_FILES})
         source_group(TREE ${CURRENT_PATH} PREFIX "Form Files" FILES ${FORM_FILES})
         source_group(TREE ${CURRENT_PATH} PREFIX "Resource Files" FILES ${RESOURCE_FILES})
-    else()
+    elseif(CMAKE_CXX_PLATFORM_ID MATCHES "MinGW")
         source_group("Header Files" FILES ${HEADER_FILES})
         source_group("Source Files" FILES ${SOURCE_FILES})
         source_group("Form Files" FILES ${FORM_FILES})
         source_group("Resource Files" FILES ${RESOURCE_FILES})
+    elseif(CMAKE_CXX_PLATFORM_ID MATCHES "Linux")
     endif()
 
     # 头文件搜索的路径
