@@ -1,0 +1,11 @@
+# ffplay pull，默认 udp
+ffplay -i rtsp://127.0.0.1:8554
+# 指定 tcp
+ffplay -i -rtsp_transport tcp rtsp://127.0.0.1:8554
+
+# MP4 to H264
+ffmpeg -i SampleVideo_1280x720_30mb.mp4 -codec copy -bsf: h264_mp4toannexb -f h264 SampleVideo_1280x720_30mb.h264
+
+# MP4 to AAC
+# 值得注意的是 -ac 2 转换为双声道
+ffmpeg -i SampleVideo_1280x720_30mb.mp4 -vn -acodec aac -ac 2 SampleVideo_1280x720_30mb.aac
