@@ -3,6 +3,3 @@ build
 
 # User Configuration
 *.user
-
-# VSCode Format
-.vscode
