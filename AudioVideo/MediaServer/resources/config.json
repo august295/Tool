@@ -1,0 +1,12 @@
+{
+    "ip": "0.0.0.0",
+    "port": 8080,
+    "threadNum": 1,
+    "video": {
+        "video_path": "../../resources/",
+        "video_name": [
+            "SampleVideo_1280x720_30mb.flv",
+            "test.flv"
+        ]
+    }
+}

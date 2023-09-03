@@ -1,0 +1,8 @@
+# compilation environment
+build*
+
+# ffmpeg generate
+resources/*
+!resources/cmd.txt
+!resources/SampleVideo_1280x720_30mb.flv
+!resources/config.json

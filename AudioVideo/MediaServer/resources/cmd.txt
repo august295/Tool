@@ -1,0 +1,26 @@
+# Server_hls
+# 当前目录创建文件夹
+mkdir test
+# ffmpeg命令行生成m3u8切片
+ffmpeg -i SampleVideo_1280x720_30mb.flv -c:v libx264 -c:a copy -f hls -hls_time 10 -hls_list_size 0 test/index.m3u8
+# 拉流
+ffplay -i http://127.0.0.1:8080/index.m3u8
+
+
+
+# Server_http_flv
+# 拉流
+ffplay -i http://127.0.0.1:8080/SampleVideo_1280x720_30mb.flv
+
+
+
+# Server_rtmp
+ffmpeg -re -i SampleVideo_1280x720_30mb.flv -vcodec h264 -acodec aac -f flv rtmp://127.0.0.1/live/test
+
+
+
+# Server_http_flv_advance
+# 转换
+ffmpeg -i test.mp4 -vcodec libx264 -acodec aac test.flv
+# 拉流
+ffplay -i http://localhost:8080/SampleVideo_1280x720_30mb.flv
