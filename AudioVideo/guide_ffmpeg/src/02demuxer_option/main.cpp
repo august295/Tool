@@ -1,0 +1,55 @@
+#include <iostream>
+
+#ifdef __cplusplus
+extern "C"
+{
+    #include <libavformat/avformat.h>
+}
+#endif // __cplusplus
+
+int main(int argc, char* argv[])
+{
+    AVFormatContext* fmt_ctx = NULL;
+    int              err;
+    const char*      filename = "../../resources/SampleVideo_1280x720_1mb.mp4";
+
+    fmt_ctx = avformat_alloc_context();
+    if (!fmt_ctx)
+    {
+        av_log(NULL, AV_LOG_ERROR, "error code %d \n", AVERROR(ENOMEM));
+        return 1;
+    }
+
+    AVDictionary*      format_opts = NULL;
+    AVDictionaryEntry* t;
+    av_dict_set(&format_opts, "formatprobesize", "10485760", AV_DICT_MATCH_CASE);
+    av_dict_set(&format_opts, "export_all", "1", AV_DICT_MATCH_CASE);
+    av_dict_set(&format_opts, "export_666", "1", AV_DICT_MATCH_CASE);
+    av_log(NULL, AV_LOG_INFO, "AVDictionary num is %d \n", av_dict_count(format_opts));
+
+    // 获取字典里的第一个属性。
+    if ((t = av_dict_get(format_opts, "", NULL, AV_DICT_IGNORE_SUFFIX)))
+    {
+        av_log(NULL, AV_LOG_INFO, "Option key: %s , value %s \n", t->key, t->value);
+    }
+    if ((err = avformat_open_input(&fmt_ctx, filename, NULL, &format_opts)) < 0)
+    {
+        av_log(NULL, AV_LOG_ERROR, "error code %d \n", err);
+    }
+    else
+    {
+        av_log(NULL, AV_LOG_INFO, "open success \n");
+        av_log(NULL, AV_LOG_INFO, "duration: %I64d \n", fmt_ctx->duration);
+    }
+
+    // 有两个属性被 avformat_open_input 用掉了，num 只剩 1
+    av_log(NULL, AV_LOG_INFO, "AVDictionary num is %d \n", av_dict_count(format_opts));
+    // 再次，获取字典里的第一个属性。
+    if ((t = av_dict_get(format_opts, "", NULL, AV_DICT_IGNORE_SUFFIX)))
+    {
+        av_log(NULL, AV_LOG_INFO, "Option key: %s , value %s \n", t->key, t->value);
+    }
+    av_dict_free(&format_opts);
+
+    return 0;
+}

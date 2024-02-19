@@ -1,2 +1,5 @@
 # Compilation environment
 build*
+
+# Visual Studio
+.vs
