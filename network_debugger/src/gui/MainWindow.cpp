@@ -7,7 +7,7 @@
 #include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QTreeWidgetItem>
 
-#include "DebuggerWidget.h"
+#include "ClientWidget.h"
 #include "MainWindow.h"
 
 struct MainWindow::MainWindowPrivate
@@ -176,10 +176,10 @@ void MainWindow::SlotShowRightMenu(QPoint point)
 
 void MainWindow::SlotCreateClient()
 {
-    QString         protocol = "TCP";
-    QString         ip       = "127.0.0.1";
-    QString         port     = "10000";
-    DebuggerWidget* tab      = new DebuggerWidget(NetworkType::LEAF_CLIENT, protocol, ip, port);
+    QString       protocol = "TCP";
+    QString       ip       = "127.0.0.1";
+    QString       port     = "10000";
+    ClientWidget* tab      = new ClientWidget(protocol, ip, port);
     m_impl->m_TabWidget->addTab(tab, ip + ":" + port);
     m_impl->m_TabWidget->setCurrentWidget(tab);
     m_impl->m_TabWidget->show();
@@ -190,7 +190,7 @@ void MainWindow::SlotCreateClient()
     item_child->setText(0, ip + ":" + port);
     item_child->setIcon(0, QIcon(":/icons/state_gray.png"));
 
-    connect(tab, &DebuggerWidget::SignalConnect, this, [=](NetworkState state) {
+    connect(tab, &ClientWidget::SignalConnect, this, [=](NetworkState state) {
         if (state == NetworkState::CONNECT)
         {
             item_child->setIcon(0, QIcon(":/icons/state_green.png"));

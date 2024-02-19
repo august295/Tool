@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>DebuggerWidgetClass</class>
- <widget class="QWidget" name="DebuggerWidgetClass">
+ <class>ClientWidgetClass</class>
+ <widget class="QWidget" name="ClientWidgetClass">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -17,7 +17,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>DebuggerWidget</string>
+   <string>ClientWidget</string>
   </property>
   <layout class="QGridLayout" name="gridLayout" columnstretch="0,0">
    <item row="0" column="1">
@@ -234,7 +234,7 @@
             </spacer>
            </item>
            <item row="4" column="0">
-            <widget class="QPushButton" name="pushButton_recv">
+            <widget class="QPushButton" name="pushButton_recv_save">
              <property name="text">
               <string>保存</string>
              </property>

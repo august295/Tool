@@ -66,8 +66,21 @@ macro(CreateTarget ProjectName Type Group)
 
     # 生成项目
     if(${Type} STREQUAL "Exe")
-        # 生成可执行文件
-        add_executable(${PROJECT_NAME}
+    if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+            # 生成可执行文件
+            add_executable(${PROJECT_NAME}
+            WIN32
+            ${HEADER_FILES} ${SOURCE_FILES}
+            ${FORM_FILES} ${RESOURCE_FILES}
+            ${CURRENT_PATH}/app_win32.rc
+        )
+        set_target_properties(${PROJECT_NAME} PROPERTIES
+            DEBUG_POSTFIX "d"
+            VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
+        )
+    elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
+            # 生成可执行文件
+            add_executable(${PROJECT_NAME}
             WIN32
             ${HEADER_FILES} ${SOURCE_FILES}
             ${FORM_FILES} ${RESOURCE_FILES}
@@ -76,6 +89,7 @@ macro(CreateTarget ProjectName Type Group)
             DEBUG_POSTFIX "d"
             VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
         )
+    endif()
     else()
         # 生成链接库
         if(${Type} STREQUAL "Lib")
