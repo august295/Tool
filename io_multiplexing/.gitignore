@@ -1,0 +1,7 @@
+# compilation environment
+build*
+out*
+
+# Visual Studio
+.vs
+CMakePresets.json
