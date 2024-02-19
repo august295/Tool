@@ -1,0 +1,8 @@
+# compilation environment
+build*
+out*
+
+# Qt Creator
+CMakeLists.txt.user
+
+# Visual Studio 2017
