@@ -28,17 +28,17 @@ int Step4(const int& input)
 
 int main()
 {
-    int                           size = 160;
+    int                           size = 16;
     std::vector<int>              initial(size, 2);
     std::vector<int>              resultVec;
     std::vector<std::future<int>> futureVec;
-
+	
     const std::chrono::time_point<std::chrono::steady_clock> start = std::chrono::steady_clock::now();
 
-    ThreadPool pool;
+    ThreadPool pool(16);
     for (size_t i = 0; i < initial.size(); i++)
     {
-        auto future = pool.Enqueue(
+        auto future = pool.enqueue(
             [](int init) {
                 int res = 0;
                 res     = Step1(init);
@@ -50,7 +50,7 @@ int main()
             initial[i]);
         futureVec.emplace_back(std::move(future));
     }
-    for (auto& fut : futureVec)
+    for (auto&& fut : futureVec)
     {
         resultVec.push_back(fut.get());
     }

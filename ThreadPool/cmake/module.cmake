@@ -1,14 +1,10 @@
-# 允许小项目分类
-SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
-
-macro(CreateTarget AbsolutePathProject Type)
+macro(CreateTarget ProjectName Type)
     # 项目名称
-    message(STATUS ${AbsolutePathProject})
-    get_filename_component(PROJECT_NAME ${AbsolutePathProject} NAME)
-    project(${PROJECT_NAME})
+    message(STATUS ${ProjectName})
+    project(${ProjectName})
 
     # 将当前目录下所有源码文件添加到变量
-    set(CURRENT_PATH ".")
+    set(CURRENT_PATH ${CMAKE_CURRENT_SOURCE_DIR})
     set(HEADER_FILES "")
     set(SOURCE_FILES "")
     file(GLOB HEADER_FILES "${CURRENT_PATH}/*.h" "${CURRENT_PATH}/*.hpp")
@@ -22,5 +18,5 @@ macro(CreateTarget AbsolutePathProject Type)
     include_directories(${CURRENT_PATH})
 
     # 生成可执行文件
-    add_executable(${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES})
+    add_executable(${ProjectName} ${HEADER_FILES} ${SOURCE_FILES})
 endmacro()

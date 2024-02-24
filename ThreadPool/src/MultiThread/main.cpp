@@ -58,8 +58,8 @@ void Calculate(const std::vector<int>& initialVec, std::vector<int>& resultVec)
 
 int main()
 {
-    int              size = 160;
-    std::vector<int> initial(size, 0);
+    int              size = 16;
+    std::vector<int> initial(size, 2);
     std::vector<int> result;
     Calculate(initial, result);
 
