@@ -2,15 +2,14 @@
 cmake_minimum_required(VERSION 3.15.0)
 
 # 项目名称
-project(FFmpegPlayer)
+project(test)
 
 # C++标准
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 # 条件编译
 if(CMAKE_CXX_PLATFORM_ID MATCHES "Windows")
     add_compile_options("/utf-8")
-    add_compile_definitions(_WIN32_WINNT=0x0601)
 elseif(CMAKE_CXX_PLATFORM_ID MATCHES "MinGW")
     add_compile_options("-Wa,-mbig-obj")
 elseif(CMAKE_CXX_PLATFORM_ID MATCHES "Linux")
@@ -34,5 +33,9 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${BUILD_DIR}/lib) # .lib and .a
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${BUILD_DIR}/lib) # .so and .dylib
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${BUILD_DIR}/bin) # .exe and .dll
 
-# 添加子目录，子目录下必须有CMakeLists.txt
+# 子模块
+include(${ROOT_DIR}/cmake/module.cmake)
+include(${ROOT_DIR}/cmake/googletest.cmake)
+
+# 源代码
 add_subdirectory(src)
